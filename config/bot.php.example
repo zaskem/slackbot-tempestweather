@@ -1,0 +1,42 @@
+<?php
+  /**
+   * General WeatherBot settings.
+   * 
+   * For best/most consistent use, set `$bot_slashcommand` and `$bot_name` to their matching Slack bot values.
+   */
+  $bot_slashcommand = '/tempest';
+  $bot_name = 'Tempest WeatherBot';
+
+  // Version vanity string and debug flag
+  $bot_version = '2021-01-10';
+  $debug_bot = false;
+
+  // Sets the default API response to be the name of the Bot app, not the Bot user.
+  $slackbot_details = array('username' => $bot_name);
+
+  /**
+   * Associative array of conditions to their matching Slack emoji codes
+   * 
+   * This information allows non-private bot forecast responses to dynamically change the Bot icon
+   *  based on the forecast conditions, and is set to emoji available by default in Slack.
+   */
+  $slackConditionIcons = array('clear-day' =>':sunny:',
+    'clear-night' =>':moon:',
+    'cloudy' =>':cloud:',
+    'foggy' =>':fog:',
+    'partly-cloudy-day' =>':sun_small_cloud:',
+    'partly-cloudy-night' =>':moon:',
+    'possibly-rainy-day' =>':rain_cloud:',
+    'possibly-rainy-night' =>':rain_cloud:',
+    'possibly-sleet-day' =>':snow_cloud:',
+    'possibly-sleet-night' =>':snow_cloud:',
+    'possibly-snow-day' =>':snow_cloud:',
+    'possibly-snow-night' =>':snow_cloud:',
+    'possibly-thunderstorm-day' =>':lightning_cloud:',
+    'possibly-thunderstorm-night' =>':lightning_cloud:',
+    'rainy' =>':rain_cloud:',
+    'sleet' =>':snow_cloud:',
+    'snow' =>':snowflake:',
+    'thunderstorm' =>':thunder_cloud_and_rain:',
+    'windy' =>':wind_blowing_face:',);
+?>

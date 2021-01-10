@@ -24,7 +24,7 @@
   // Was the command invoked with the `help` keyword? Generate help response
   } else if (strpos($_POST['text'], 'help') !== false) {
     // Create basic text response (fallback text)
-    $responseText = "The help command failed to generate output. Please visit https://tempestbot.mzonline.com for help information.";
+    $responseText = "The help command failed to generate output. Please visit http://tempestweatherbot.mzonline.com/ for help information.";
     // Create blocks for formal `help` response
     // Use https://app.slack.com/block-kit-builder/ to test out block structure
     $helpHeaderBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>$bot_name . ' Help','emoji'=>true));
@@ -55,7 +55,7 @@
     );
     $block6 = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'The `private` keyword can be appended to the _end_ of any command to privately respond to the calling user. This keyword _*must*_ be the last argument in all commands.'));
     $botSourceHeaderBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Bot Project and Source Code','emoji'=>true));
-    $block7 = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'The ' . $bot_name . ' project page and source code on GitHub can be found at https://tempestbot.mzonline.com.'));
+    $block7 = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'The ' . $bot_name . ' project page and source code on GitHub can be found at http://tempestweatherbot.mzonline.com/.'));
     $dividerBlock = array('type'=>'divider');
     $contextBlock = array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>$bot_name . ' version: ' . $bot_version)]);
 

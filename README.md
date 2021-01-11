@@ -46,7 +46,7 @@ On installation and configuration, interact with the bot accordingly in Slack: `
 If all is successful, some fancy output like this will be presented:
 ![Example image of "tomorrow" forecast](https://github.com/zaskem/slackbot-tempestweather/blob/main/images/tomorrow.png?raw=true)
 
-Almost every response from the bot will include a note about the `help` argument. Using this command provides substantially more information about the bot's options.
+Almost every response from the bot will include a note about the `help` argument. Using this command provides substantially more information about the bot's options. Most [help content is available on the project site](https://tempestweatherbot.mzonline.com/help.html).
 
 ## Slack Posting
 By design the bot defaults to posting its response in the channel in which the command was entered. However, the user has an option to quell the post by including the `private` keyword as the last argument in a command (e.g. `/weather Friday private`). "Public" responses are submitted via the Web API `chat.postMessage` endpoint. Private responses are submitted via the temporary `response_url` webhook provided in the `POST` arguments to the request handler. Debug, help, and error information is generally relayed as part of the request's Acknowledgement response.

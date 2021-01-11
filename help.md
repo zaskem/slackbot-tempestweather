@@ -2,6 +2,7 @@
 The Tempest WeatherBot responds to a number of arguments and keywords explained below. When provided no argument (e.g. `/weather`)` the bot will respond with current conditions.
 
 Example commands (e.g. `/weather [argument]`)
+
 | Command | Description |
 |---|---|
 | `/weather <blank>` | Display current conditions |
@@ -13,6 +14,7 @@ Example commands (e.g. `/weather [argument]`)
 ---
 ## Forecast Range
 The Tempest WeatherBot can respond to forecast inquiries _up to 10 days_ from the current time. This means arguments (`hour[s]`, `day[s]`, and `week`) should fall within the specified ranges. Arguments outside this range will return a private error or display the current conditions.
+
 | Command | Argument Range |
 |---|---|
 | `/weather X hours` | X can range `1` to `120` |
@@ -22,6 +24,7 @@ The Tempest WeatherBot can respond to forecast inquiries _up to 10 days_ from th
 ---
 ## Bot Keyword Actions
 The Tempest WeatherBot has unique keywords unrelated to the weather conditions or forecast. Supported keyword actions:
+
 | Command | Description |
 |---|---|
 | `/weather help` | Display this help information |
@@ -31,17 +34,21 @@ The `private` keyword can be appended to the end of any command to privately res
 
 ---
 ## Exampe Responses
-* `/weather <blank>` or `/weather now`:
+  `/weather <blank>` or `/weather now`:
   ![Example current conditions response](https://github.com/zaskem/slackbot-tempestweather/blob/gh-pages/images/current.png?raw=true)
 
-* `/weather Thursday`:
+
+  `/weather Thursday`:
   ![Example "Thursday" forecast](https://github.com/zaskem/slackbot-tempestweather/blob/gh-pages/images/thursday.png?raw=true)
 
-* `/weather 110 hours`:
+
+  `/weather 110 hours`:
   ![Example +110-hour forecast](https://github.com/zaskem/slackbot-tempestweather/blob/gh-pages/images/110hour.png?raw=true)
 
-* `/weather 2 days`:
+
+  `/weather 2 days`:
   ![Example +2 day forecast](https://github.com/zaskem/slackbot-tempestweather/blob/gh-pages/images/2day.png?raw=true)
 
-* `/weather tomorrow private`:
+
+  `/weather tomorrow private`:
   ![Example "tomorrow" forecast with a private response](https://github.com/zaskem/slackbot-tempestweather/blob/gh-pages/images/tomorrow-private.png?raw=true)

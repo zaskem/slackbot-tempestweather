@@ -1,0 +1,31 @@
+SLACK API HELPFUL LINKS
+
+https://api.slack.com/apps/A01J0HGHABT/oauth?success=1
+https://api.slack.com/apps/A01J0HGHABT/event-subscriptions?success=1
+
+https://nordicapis.com/a-beginners-guide-to-building-a-slack-bot-in-php/
+view-source:https://nordicapis.com/a-beginners-guide-to-building-a-slack-bot-in-php/
+
+https://api.slack.com/web
+https://api.slack.com/messaging/sending#getting_started
+https://api.slack.com/methods/chat.postMessage
+https://api.slack.com/events/message.channels
+https://api.slack.com/events/app_mention
+https://api.slack.com/events-api
+
+https://api.slack.com/messaging/webhooks#handling_errors
+
+https://api.slack.com/authentication/basics
+https://api.slack.com/bot-users
+
+https://api.slack.com/reference/messaging/payload
+https://api.slack.com/messaging/composing
+https://api.slack.com/docs/messages/builder?msg=%7B%22text%22%3A%22I%20am%20a%20test%20message%22%2C%22icon_emoji%22%3A%22%3Amiddle_finger%3A%22%2C%22attachments%22%3A%5B%7B%22text%22%3A%22And%20here%E2%80%99s%20an%20attachment!%22%7D%5D%7D
+
+Tempest Bot LINKS
+https://weatherflow.github.io/Tempest/api/derived-metric-formulas.html
+https://github.com/WallGauge-GaugeApps/weatherFlowDataGetter/blob/master/weatherFlowDataGetter.js
+https://weatherflow.github.io/Tempest/api/swagger/#!/forecast/getBetterForecast
+https://weatherflow.github.io/Tempest/api/swagger/#!/observations/getObservationsByDeviceId
+
+https://weatherflow.github.io/Tempest/api/

@@ -35,20 +35,25 @@ The `private` keyword can be appended to the end of any command to privately res
 ---
 ## Exampe Responses
   `/weather <blank>` or `/weather now`:
+
   ![Example current conditions response](https://github.com/zaskem/slackbot-tempestweather/blob/gh-pages/images/current.png?raw=true)
 
 
   `/weather Thursday`:
+
   ![Example "Thursday" forecast](https://github.com/zaskem/slackbot-tempestweather/blob/gh-pages/images/thursday.png?raw=true)
 
 
   `/weather 110 hours`:
+
   ![Example +110-hour forecast](https://github.com/zaskem/slackbot-tempestweather/blob/gh-pages/images/110hour.png?raw=true)
 
 
   `/weather 2 days`:
+
   ![Example +2 day forecast](https://github.com/zaskem/slackbot-tempestweather/blob/gh-pages/images/2day.png?raw=true)
 
 
   `/weather tomorrow private`:
+  
   ![Example "tomorrow" forecast with a private response](https://github.com/zaskem/slackbot-tempestweather/blob/gh-pages/images/tomorrow-private.png?raw=true)

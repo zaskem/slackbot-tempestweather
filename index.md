@@ -1,4 +1,5 @@
-The Slack Tempest Weather Bot was developed by [@zaskem](https://github.com/zaskem) to do something useful and practical with data from his Tempest weather station via its remote API. 
+# Slack Tempest WeatherBot
+The Slack Tempest WeatherBot was developed by [@zaskem](https://github.com/zaskem) to do something useful and practical with data from his Tempest weather station via its remote API. 
 
 The bot itself requires some form of personal access to a [WeatherFlow Tempest station](https://weatherflow.com/tempest-weather-system/). Per the Tempest [Remote Data Access Policy](https://weatherflow.github.io/Tempest/api/remote-developer-policy.html) this is to be your own station, or definitely a non-commercial endeavor with a close friend otherwise.
 

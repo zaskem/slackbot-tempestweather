@@ -224,7 +224,7 @@
           // Create blocks for prettier response
           // Use https://app.slack.com/block-kit-builder/ to test out block structure
           $headerBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Forecast for ' . $modifiedObs['timestamp'],'emoji'=>true));
-          $conditionsBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$modifiedObs['conditions'] . ' (feels like ' . $modifiedObs['feelsLike'] . ')'));
+          $conditionsBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$modifiedObs['conditions'] . ', ' . $modifiedObs['temperature'] . ' (feels like ' . $modifiedObs['feelsLike'] . ')'));
           $precipBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'There is a ' . $modifiedObs['precip_probability'] . ' chance of ' . $modifiedObs['precip_type'] . '.'));
           $windBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$modifiedObs['windDir'] . ' winds averaging ' . $modifiedObs['windAvg'] . ' MPH.'));
           $dividerBlock = array('type'=>'divider');

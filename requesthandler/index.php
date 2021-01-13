@@ -164,7 +164,7 @@
             'timestamp' => date('l, F j', $obsData['day_start_local']),
             'high_temperature' => $obsData['air_temp_high'] . "ºF",
             'low_temperature' => $obsData['air_temp_low'] . "ºF",
-            'precip_type' => $obsData['precip_type'],
+            'precip_type' => (isset($obsData['precip_type'])) ? $obsData['precip_type'] : '',
             'precip_probability' => $obsData['precip_probability'] . "%",
             'conditions' => $obsData['conditions'],
             'sunrise' => date('g:i a', $obsData['sunrise']),
@@ -207,7 +207,7 @@
             'timestamp' => ($hoursToForecast > 8) ? date('l, F j, g:i a', $obsData['time']) : date('g:i a', $obsData['time']),
             'temperature' => $obsData['air_temperature'] . "ºF",
             'pressure' => $obsData['sea_level_pressure'],
-            'precip_type' => $obsData['precip_type'],
+            'precip_type' => (isset($obsData['precip_type'])) ? $obsData['precip_type'] : '',
             'precip_probability' => $obsData['precip_probability'] . "%",
             'conditions' => $obsData['conditions'],
             'feelsLike' => $obsData['feels_like'] . "ºF",
@@ -224,7 +224,7 @@
           // Create blocks for prettier response
           // Use https://app.slack.com/block-kit-builder/ to test out block structure
           $headerBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Forecast for ' . $modifiedObs['timestamp'],'emoji'=>true));
-          $conditionsBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$modifiedObs['conditions'] . ' (feels like ' . $modifiedObs['feelsLike'] . ')'));
+          $conditionsBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$modifiedObs['conditions'] . ', ' . $modifiedObs['temperature'] . ' (feels like ' . $modifiedObs['feelsLike'] . ')'));
           $precipBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'There is a ' . $modifiedObs['precip_probability'] . ' chance of ' . $modifiedObs['precip_type'] . '.'));
           $windBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$modifiedObs['windDir'] . ' winds averaging ' . $modifiedObs['windAvg'] . ' MPH.'));
           $dividerBlock = array('type'=>'divider');

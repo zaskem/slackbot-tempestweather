@@ -19,7 +19,7 @@
   }
 
   function converKmToMiles($kmValue) {
-    return number_format(($kValue / 1.609344497892563), 2);
+    return number_format(($kmValue / 1.609344497892563), 2);
   }
   function convertDegreesToWindDirection($degrees) {
     $directions = array('N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW', 'N');

@@ -1,4 +1,4 @@
-# slackbot-tempestweather
+# Slack Tempest WeatherBot
 A Slack bot to interact with a Tempest weather station, bringing local weather data into your favorite Slack channels. Developed by [@zaskem](https://github.com/zaskem) to do something useful and practical with data from his Tempest weather station via its remote API.
 
 ## Requirements

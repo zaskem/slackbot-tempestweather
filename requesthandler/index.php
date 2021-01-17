@@ -3,18 +3,19 @@
    * THE FOLLOWING LINE IS THE _ONLY_ REQUIRED EDIT FOR THIS REQUEST URL HANDLER.
    * CHANGE THIS TO THE NON-WEB ACCESSIBLE PATH HOUSING THE REST OF THE BOT CODE.
    */
-  $botCodePath = __DIR__.'/../';
+  $botCodePath = __DIR__ . '/../';
 
   require $botCodePath . '/TempestAPIFunctions.php';
   require $botCodePath . '/ConversionUtils.php';
   require $botCodePath . '/SlackPost.php';
+  require $botCodePath . '/SlackResponseBlocks.php';
   require $botCodePath . '/config/bot.php';
 
   // Set the channel from which this request was called/invoked
   $slackbot_details['channel'] = $_POST['channel_id'];
 
   // Grab the generated list of valid users in the accompanying Slack workspace
-  $slackUsers = include $botCodePath .'/config/slackUsers.generated.php';
+  $slackUsers = include $botCodePath . '/config/slackUsers.generated.php';
   // Look for "authorization" to use this (is the requesting user at least in the known Slack users)
   if (!in_array($_POST['user_id'], $slackUsers)) {
     header("Content-Type: application/json");
@@ -23,47 +24,13 @@
     die();
   // Was the command invoked with the `help` keyword? Generate help response
   } else if (strpos($_POST['text'], 'help') !== false) {
-    // Create basic text response (fallback text)
+    // Create basic text response (fallback text pointing to project site)
     $responseText = "The help command failed to generate output. Please visit https://tempestweatherbot.mzonline.com/ for help information.";
-    // Create blocks for formal `help` response
-    // Use https://app.slack.com/block-kit-builder/ to test out block structure
-    $helpHeaderBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>$bot_name . ' Help','emoji'=>true));
-    $block1 = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'The ' . $bot_name . ' responds to a number of arguments and keywords explained below. When provided _no_ argument (e.g. `' . $bot_slashcommand . '`) the bot will respond with current conditions.'));
-    $block2 = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'Example commands (e.g. `' . $bot_slashcommand . ' [argument]`)'));
-    $argumentBlock = array('type'=>'section','fields'=>
-      array(['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' <blank>`'],['type'=>'mrkdwn','text'=>'Display current conditions'],
-        ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' now`'],['type'=>'mrkdwn','text'=>'Display current conditions'],
-        ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' Tuesday`'],['type'=>'mrkdwn','text'=>'Display the forecast for Tuesday'],
-        ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' 85 hours`'],['type'=>'mrkdwn','text'=>'Display the forecast 85 hours from now'],
-        ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' 3 days`'],['type'=>'mrkdwn','text'=>'Display the forecast three days from now']
-      )
-    );
-    $rangeHeaderBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Forecast Range','emoji'=>true));
-    $block4 = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'The ' . $bot_name . ' can respond to forecast inquiries _up to 10 days_ from the current time. This means arguments (`hours`, `days`, and `week`) should fall within the specified ranges. Arguments outside this range will return a private error or display the current conditions.'));
-    $rangeBlock = array('type'=>'section','fields'=>
-      array(['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' X hours`'],['type'=>'mrkdwn','text'=>'X can range `1` to `120`'],
-        ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' X days`'],['type'=>'mrkdwn','text'=>'X can range `1` to `10`'],
-        ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' X week`'],['type'=>'mrkdwn','text'=>'X can only be `1`']
-      )
-    );
-    $keywordHeaderBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Bot Keyword Actions','emoji'=>true));
-    $block5 = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'The ' . $bot_name . ' has unique keywords unrelated to the weather conditions or forecast. Supported keyword actions:'));
-    $keywordBlock = array('type'=>'section','fields'=>
-      array(['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' help`'],['type'=>'mrkdwn','text'=>'Display this help information'],
-        ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' 6 hours private`'],['type'=>'mrkdwn','text'=>'Display the forecast 6 hours from now with a private response']
-      )
-    );
-    $block6 = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'The `private` keyword can be appended to the _end_ of any command to privately respond to the calling user. This keyword _*must*_ be the last argument in all commands.'));
-    $botSourceHeaderBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Bot Project and Source Code','emoji'=>true));
-    $block7 = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'The ' . $bot_name . ' project page and source code on GitHub can be found at https://tempestweatherbot.mzonline.com/.'));
-    $dividerBlock = array('type'=>'divider');
-    $contextBlock = array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>$bot_name . ' version: ' . $bot_version)]);
-
-    // Build block response
-    $blocks = [$helpHeaderBlock,$block1,$block2,$argumentBlock,$dividerBlock,$rangeHeaderBlock,$block4,$rangeBlock,$dividerBlock,$keywordHeaderBlock,$block5,$keywordBlock,$block6,$dividerBlock,$botSourceHeaderBlock,$block7,$dividerBlock,$contextBlock];
+    // Use blocks for formal `help` response
+    $blockResponse = getHelpContentBlocks();
 
     header("Content-Type: application/json");
-    $response = array('response_type' => 'ephemeral', 'text' => $responseText, 'blocks' => $blocks);
+    $response = array('response_type' => 'ephemeral', 'text' => $responseText, 'blocks' => $blockResponse);
     print json_encode($response);
     die();
   // Looks like it'll be a valid request -- proceed with some weather magic
@@ -99,17 +66,8 @@
 
       // Create basic text response (fallback)
       $responseText = "At $modifiedObs[timestamp], the temperature was $modifiedObs[temperature] (feels like $modifiedObs[feelsLike]) with a $modifiedObs[windDir] wind at $modifiedObs[windAvg] MPH.";
-      // Create blocks for prettier response
-      // Use https://app.slack.com/block-kit-builder/ to test out block structure
-      $headerBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Current conditions at ' . $modifiedObs['timestamp'],'emoji'=>true));
-      $temperatureBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'Temperature: '. $modifiedObs['temperature'] . ' (feels like ' . $modifiedObs['feelsLike'] . ')'));
-      $windBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'Wind at ' . $modifiedObs['windAvg'] . ' MPH from the ' . $modifiedObs['windDir'] . '.'));
-      $dividerBlock = array('type'=>'divider');
-      $contextBlock = array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>'Get help with `' . $bot_slashcommand . ' help`')]);
-
-      // Build block response
-      $blocks = [$headerBlock,$temperatureBlock,$windBlock,$dividerBlock,$contextBlock];
-      $slackbot_details['blocks'] = $blocks;
+      // Use blocks for prettier response
+      $slackbot_details['blocks'] = getCurrentObservationBlocks($modifiedObs);
 
       $result = SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
       if ($debug_bot) {
@@ -177,22 +135,8 @@
           if ($modifiedObs['precip_probability']> 0) { $responseText .= " There's a $modifiedObs[precip_probability] chance of $modifiedObs[precip_type]."; }
           $responseText .= " Sunrise: $modifiedObs[sunrise] | Sunset: $modifiedObs[sunset].";
 
-          // Create blocks for prettier response
-          // Use https://app.slack.com/block-kit-builder/ to test out block structure
-          $headerBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Forecast for ' . $modifiedObs['timestamp'],'emoji'=>true));
-          $conditionsBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$modifiedObs['conditions'] . ' with a high of ' . $modifiedObs['high_temperature'] . ' (low: ' . $modifiedObs['low_temperature'] . ').'));
-          $precipBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'There is a ' . $modifiedObs['precip_probability'] . ' chance of ' . $modifiedObs['precip_type'] . '.'));
-          $sunBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'Sunrise: ' . $modifiedObs['sunrise'] . ' | Sunset: ' . $modifiedObs['sunset'] . '.'));
-          $dividerBlock = array('type'=>'divider');
-          $contextBlock = array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>'Get help with `' . $bot_slashcommand . ' help`')]);
-
-          // Build block response
-          if ($modifiedObs['precip_probability'] > 0) {
-            $blocks = [$headerBlock,$conditionsBlock,$precipBlock,$sunBlock,$dividerBlock,$contextBlock];
-          } else {
-            $blocks = [$headerBlock,$conditionsBlock,$sunBlock,$dividerBlock,$contextBlock];
-          }
-          $slackbot_details['blocks'] = $blocks;
+          // Use blocks for prettier response
+          $slackbot_details['blocks'] = getDayForecastBlocks($modifiedObs);
           
           $result = SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
           if ($debug_bot) {
@@ -221,22 +165,8 @@
           if ($modifiedObs['precip_probability']> 0) { $responseText .= " with a $modifiedObs[precip_probability] chance of $modifiedObs[precip_type]"; }
           $responseText .= ". $modifiedObs[windDir] winds averaging $modifiedObs[windAvg] MPH.";
 
-          // Create blocks for prettier response
-          // Use https://app.slack.com/block-kit-builder/ to test out block structure
-          $headerBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Forecast for ' . $modifiedObs['timestamp'],'emoji'=>true));
-          $conditionsBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$modifiedObs['conditions'] . ', ' . $modifiedObs['temperature'] . ' (feels like ' . $modifiedObs['feelsLike'] . ')'));
-          $precipBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'There is a ' . $modifiedObs['precip_probability'] . ' chance of ' . $modifiedObs['precip_type'] . '.'));
-          $windBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$modifiedObs['windDir'] . ' winds averaging ' . $modifiedObs['windAvg'] . ' MPH.'));
-          $dividerBlock = array('type'=>'divider');
-          $contextBlock = array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>'Get help with `' . $bot_slashcommand . ' help`')]);
-
-          // Build block response
-          if ($modifiedObs['precip_probability'] > 0) {
-            $blocks = [$headerBlock,$conditionsBlock,$precipBlock,$windBlock,$dividerBlock,$contextBlock];
-          } else {
-            $blocks = [$headerBlock,$conditionsBlock,$windBlock,$dividerBlock,$contextBlock];
-          }
-          $slackbot_details['blocks'] = $blocks;
+          // Use blocks for prettier response
+          $slackbot_details['blocks'] = getHourForecastBlocks($modifiedObs);
 
           $result = SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
           if ($debug_bot) {

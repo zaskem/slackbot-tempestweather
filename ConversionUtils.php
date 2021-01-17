@@ -1,5 +1,36 @@
 <?php
   /**
+   * min_mod() function modification to ignore "null" values, sourced from https://www.php.net/manual/en/function.min.php
+   */
+  function min_mod () {
+    $args = func_get_args();
+    if (!count($args[0])) return false;
+    else {
+      $min = false;
+      foreach ($args[0] AS $value) {
+        if (is_numeric($value)) {
+          $curval = floatval($value);
+          if ($curval < $min || $min === false) $min = $curval;
+        }
+      }
+    }
+    return $min;  
+  }
+
+  /**
+   * getParentKey($needle, $haystack, $searchColumn) - Returns the "outer" (parent) key in which $needle matches a value in $searchColumn
+   * 
+   * This is intended to be used on a single-depth multidimensional array...and intended to only find 1 match (one unique value).
+   */
+  function getParentKey($needle, $haystack, $searchColumn) {
+    foreach($haystack as $key => $value) {
+      if ($needle == $value[$searchColumn]) {
+        return $key;
+      }
+    }
+  }
+  
+  /**
    * Functions provided for convenience of converting between units.
    */
   function convertCToF($cValue = 0) {
@@ -18,7 +49,7 @@
     return number_format(($mmValue / 25.4), 2);
   }
 
-  function converKmToMiles($kmValue) {
+  function convertKmToMiles($kmValue) {
     return number_format(($kmValue / 1.609344497892563), 2);
   }
   function convertDegreesToWindDirection($degrees) {

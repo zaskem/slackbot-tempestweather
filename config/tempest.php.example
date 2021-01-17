@@ -2,11 +2,14 @@
   /**
    * The Tempest API Explorer guides most of what is listed in this include. https://weatherflow.github.io/Tempest/api/swagger/
    * 
-   * The primary thing to change in this file is the $tempestBotToken value, which you can obtain for your own Tempest station at https://tempestwx.com/settings/tokens
+   * The primary thing to change in this file is the `$tempestBotToken` value, which you can obtain for your own Tempest station at https://tempestwx.com/settings/tokens
+   *
+   * For best and most predictable bot results, also set `$tempestStationHistoryStartDate` to the earliest (or desired earliest) reported history for the station in scope. This acts as a safety check/'beginning of epoch' for the bot history; timestamps _before_ this point will be ignored.
    */
   $tempestBotToken = 'your-bot-token-goes-here';
   $tempestMetadataUrl = "https://swd.weatherflow.com/swd/rest/stations?token=$tempestBotToken";
   $tempestStationHistoryPath = __DIR__ . '/history/';
+  $tempestStationHistoryStartDate = '2000-01-01';
 
   $tempestTempUnit = 'f';
   $tempestWindUnit = 'mph';

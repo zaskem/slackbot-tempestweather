@@ -2,10 +2,11 @@
   /**
    * The Tempest API Explorer guides most of what is listed in this include. https://weatherflow.github.io/Tempest/api/swagger/
    * 
-   * The primary thing to change in this file is the $tempestBotToken value, which you can obtain for your own Tempest station at https://tempestwx.com/settings/tokens
+   * The primary thing to change in this file is the `$tempestBotToken` value, which you can obtain for your own Tempest station at https://tempestwx.com/settings/tokens
    */
   $tempestBotToken = 'your-bot-token-goes-here';
   $tempestMetadataUrl = "https://swd.weatherflow.com/swd/rest/stations?token=$tempestBotToken";
+  $tempestStationHistoryPath = __DIR__ . '/history/';
 
   $tempestTempUnit = 'f';
   $tempestWindUnit = 'mph';
@@ -16,4 +17,5 @@
   $stationMetadata = include __DIR__ . '/stationMetadata.generated.php';
   $tempestLastObsUrl = "https://swd.weatherflow.com/swd/rest/observations/station/$stationMetadata[station_id]?token=$tempestBotToken";
   $tempestForecastUrl = "https://swd.weatherflow.com/swd/rest/better_forecast?station_id=$stationMetadata[station_id]&units_temp=$tempestTempUnit&units_wind=$tempestWindUnit&units_pressure=$tempestPressureUnit&units_precip=$tempestPrecipUnit&units_distance=$tempestDistanceUnit&lat=$stationMetadata[latitude]&lon=$stationMetadata[longitude]&token=$tempestBotToken";
+  $tempestObservationsUrl = "https://swd.weatherflow.com/swd/rest/observations/device/".$stationMetadata['devices'][1]['device_id']."?token=$tempestBotToken";
 ?>

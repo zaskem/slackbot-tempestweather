@@ -273,6 +273,7 @@
           // Use blocks for prettier response
           $slackbot_details['blocks'] = getDayHistoryBlocks($summaryData);
 
+
           $result = SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
           if ($debug_bot) {
             header("Content-Type: application/json");

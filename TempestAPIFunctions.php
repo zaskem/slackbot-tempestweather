@@ -98,6 +98,9 @@
 
     $stationObservations = json_decode($json, true);
 
+    // should check some status stuff here to see if request was good...
+    
+    // Write out our station data
     file_put_contents($tempestStationHistoryPath . $fileName . '.json', $json);
   }
 
@@ -130,6 +133,9 @@
 
     $stationObservations = json_decode($json, true);
 
+    // should check some status stuff here to see if request was good...
+    
+    // Write out our station data
     file_put_contents($tempestStationHistoryPath . $date . '.json', $json);
   }
 
@@ -138,6 +144,8 @@
    * 
    * Utility function to grab n > 1 days' worth of observations in one go.
    * $startDate/$endDate should be of format 'YYYY-MM-DD' to behave as designed; will likely report wonky results otherwise
+   * 
+   * Function self throttles to 1 request/second to be kind to the API endpoint.
    * 
    * Writes JSON files to $tempestStationHistoryPath
    */

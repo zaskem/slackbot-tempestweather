@@ -50,16 +50,24 @@
       case 'history':
         // History Range Detail
         $historyHeaderBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>$bot_name . ' Help: History Commands and Range','emoji'=>true));
-        $historyDetailBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'The ' . $bot_name . ' can respond with daily station history summaries _on or *after*_ ' . date('F j, Y', strtotime($bot_historyStarts)) . ' through the current time.'));
-        $historyRangeBlock = array('type'=>'section','fields'=>
-          array(['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' yesterday`'],['type'=>'mrkdwn','text'=>'Display daily summary for yesterday'],
-            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' X hour/day/week/month[s]`'],['type'=>'mrkdwn','text'=>'X can be any *negative* number within bot range. Display summary for the matching date'],
-            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' dateString`'],['type'=>'mrkdwn','text'=>'`dateString` should be in `YYYY-MM-DD`  or `DD-MM-YYYY` format (e.g. `2020-10-01`). Display summary for the matching date'],
-            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' dateString to dateString`'],['type'=>'mrkdwn','text'=>'`dateString` should be in `YYYY-MM-DD`  or `DD-MM-YYYY` format (e.g. `2020-10-01`). Display summary for the submitted period']
+        $historyDetailBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'The ' . $bot_name . ' can respond with daily station history summaries _on or *after*_ ' . date('F j, Y', strtotime($bot_historyStarts)) . ' through the current date.'));
+        $historyExactBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'Specify a specific date or date range. `dateString` should be in `YYYY-MM-DD` or `DD-MM-YYYY` format:'));
+        $historyExactRangeBlock = array('type'=>'section','fields'=>
+          array(['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' X hour/day/week/month[s]`'],['type'=>'mrkdwn','text'=>'X is a *negative* number within range. Display summary for the matching date'],
+            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' dateString`'],['type'=>'mrkdwn','text'=>'Display summary for the matching date'],
+            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' dateString to dateString`'],['type'=>'mrkdwn','text'=>'Display summary for the submitted period']
           )
         );
+        $historyRelativeBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'Relative keywords (`yesterday`, `last`, and `this`) can also be used:'));
+        $historyRelativeRangeBlock = array('type'=>'section','fields'=>
+          array(['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' yesterday`'],['type'=>'mrkdwn','text'=>'Display daily summary for yesterday'],
+            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' last week/month/year`'],['type'=>'mrkdwn','text'=>'Display summary for the requested period'],
+            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' this week/month/year`'],['type'=>'mrkdwn','text'=>'Display summary for the requested period (through the current day).']
+          )
+        );
+        $historyRelativeDetailBlock = array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>'Note: `week`s are relative to Mondays.')]);
         // Build block response
-        $blocks = [$historyHeaderBlock, $historyDetailBlock, $historyRangeBlock, $keywordPrivateBlock, $dividerBlock, $botVersionBlock];
+        $blocks = [$historyHeaderBlock, $historyDetailBlock, $dividerBlock, $historyExactBlock, $historyExactRangeBlock, $dividerBlock, $historyRelativeBlock, $historyRelativeRangeBlock, $historyRelativeDetailBlock, $dividerBlock, $keywordPrivateBlock, $dividerBlock, $botVersionBlock];
         break;
 
       default:

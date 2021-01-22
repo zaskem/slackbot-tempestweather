@@ -62,7 +62,7 @@
     } else if (((("last" == trim($parsedArgs[0])) || ("this" == trim($parsedArgs[0]))) && (("week" == trim($parsedArgs[1])) || ("month" == trim($parsedArgs[1])) || ("year" == trim($parsedArgs[1])))) || (strpos($_POST['text'], ' to ') !== false)) {
       // Does the command match any of the 'history range' keyword patterns?
       $natureOfRequest = 'historyrange';
-    } else if (("yesterday" == trim($parsedArgs[0])) || ($parsedArgs[0] < 0)) {
+    } else if (("yesterday" == trim($parsedArgs[0])) || ($parsedArgs[0] < time())) {
       // Is the argument negative (history)?
       $natureOfRequest = 'dayhistory';
     } else {
@@ -115,8 +115,12 @@
         if ("last" == trim($historyArgs[0])) {
           // "last" [week/month/year]
           if ("week" == trim($historyArgs[1])) {
-            $startRange = strtotime('midnight last Monday');
-            $endRange = strtotime('midnight last Sunday') + 86340;
+            // Relative to now
+            //$startRange = strtotime('yesterday') - 518400;
+            //$endRange = strtotime('yesterday') + 86340;
+            // Last week (assuming Monday == beginning of week)
+            $startRange = strtotime('midnight Monday this week') - 604800;
+            $endRange = strtotime('midnight Monday this week') - 60;
           }
           if ("month" == trim($historyArgs[1])) {
             $startRange = strtotime('midnight first day of last month');
@@ -133,7 +137,7 @@
         } else if ("this" == trim($historyArgs[0])) {
           // "this" [week/month/year]
           if ("week" == trim($historyArgs[1])) {
-            $startRange = strtotime('midnight Monday');
+            $startRange = strtotime('midnight Monday this week');
           }
           if ("month" == trim($historyArgs[1])) {
             $startRange = strtotime('midnight first day of this month');
@@ -286,7 +290,6 @@
           $responseText = "On $summaryData[historyDate], the high temperature was $summaryData[highTemp] with a low of $summaryData[lowTemp]. The average temperature for the day was $summaryData[avgTemp]. A high wind gust of $summaryData[highWindGust] was observed at $summaryData[highWindTimestamp].";
           // Use blocks for prettier response
           $slackbot_details['blocks'] = getDayHistoryBlocks($summaryData);
-
 
           $result = SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
           if ($debug_bot) {

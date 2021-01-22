@@ -25,10 +25,24 @@
     die();
   // Was the command invoked with the `help` keyword? Generate help response
   } else if (strpos($_POST['text'], 'help') !== false) {
+    // Grab just the remaining text from the `help` argument (regardless of `help`'s position in the command string)
+    $arguments = array_filter(array_map('trim', explode('help', $_POST['text'])));
+    switch (reset($arguments)) {
+      case 'conditions':
+        $blockResponse = getHelpContentBlocks('conditions');
+        break;
+      case 'forecast':
+        $blockResponse = getHelpContentBlocks('forecast');
+        break;
+      case 'history':
+        $blockResponse = getHelpContentBlocks('history');
+        break;
+      default:
+        $blockResponse = getHelpContentBlocks();
+        break;
+    }
     // Create basic text response (fallback text pointing to project site)
     $responseText = "The help command failed to generate output. Please visit https://tempestweatherbot.mzonline.com/ for help information.";
-    // Use blocks for formal `help` response
-    $blockResponse = getHelpContentBlocks();
 
     header("Content-Type: application/json");
     $response = array('response_type' => 'ephemeral', 'text' => $responseText, 'blocks' => $blockResponse);

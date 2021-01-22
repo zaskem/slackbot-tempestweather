@@ -62,7 +62,7 @@
     } else if (((("last" == trim($parsedArgs[0])) || ("this" == trim($parsedArgs[0]))) && (("week" == trim($parsedArgs[1])) || ("month" == trim($parsedArgs[1])) || ("year" == trim($parsedArgs[1])))) || (strpos($_POST['text'], ' to ') !== false)) {
       // Does the command match any of the 'history range' keyword patterns?
       $natureOfRequest = 'historyrange';
-    } else if (("yesterday" == trim($parsedArgs[0])) || ($parsedArgs[0] < time())) {
+    } else if (("yesterday" == trim($parsedArgs[0])) || (strtotime($parsedArgs[0]) < time())) {
       // Is the argument negative (history)?
       $natureOfRequest = 'dayhistory';
     } else {

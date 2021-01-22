@@ -36,7 +36,7 @@
         $forecastHeaderBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>$bot_name . ' Help: Forecast Commands and Range','emoji'=>true));
         $forecastDetailBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'The ' . $bot_name . ' can respond to forecast inquiries _up to 10 days_ from the current time. This means arguments (`hours`, `days`, and `week`) should fall within the specified ranges. Arguments beyond this range will return a private error or display the current conditions.'));
         $forecastRangeBlock = array('type'=>'section','fields'=>
-          array(['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' X hour[s]`'],['type'=>'mrkdwn','text'=>'X can range `1` to `120`. Display the forecast for the specified hour'],
+          array(['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' X hour[s]`'],['type'=>'mrkdwn','text'=>'X can range `1` to `240`. Display the forecast for the specified hour'],
             ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' X day[s]`'],['type'=>'mrkdwn','text'=>'X can range `1` to `10`. Display the hour-specific forecast +X day[s]'],
             ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' Saturday`'],['type'=>'mrkdwn','text'=>'`tomorrow` or weekday name. Display the "day" forecast.'],
             ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' X week`'],['type'=>'mrkdwn','text'=>'X can only be `1`']

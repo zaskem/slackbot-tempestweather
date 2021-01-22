@@ -17,7 +17,7 @@ The Tempest WeatherBot can respond to forecast inquiries _up to 10 days_ from th
 
 | Command | Argument Range |
 |---|---|
-| `/weather X hours` | X can range `1` to `120` |
+| `/weather X hours` | X can range `1` to `240` |
 | `/weather X days` | X can range `1` to `10` |
 | `/weather X week` | X can only be `1` |
 

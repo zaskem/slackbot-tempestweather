@@ -4,83 +4,93 @@
   // The guide/mechanism at https://app.slack.com/block-kit-builder/ is awesome for testing block structure
   $helpContextBlock = array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>'Get help with `' . $bot_slashcommand . ' help`')]);
   $botVersionBlock = array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>$bot_name . ' version: ' . $bot_version)]);
+  $botSourceHeaderBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Bot Project and Source Code','emoji'=>true));
+  $botSourceDetailBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'The ' . $bot_name . ' project page and source code on GitHub can be found at https://tempestweatherbot.mzonline.com/.'));
   $dividerBlock = array('type'=>'divider');
 
 
   function getHelpContentBlocks($args = null) {
-    global $bot_name, $bot_slashcommand, $bot_historyStarts, $dividerBlock, $botVersionBlock;
+    global $bot_name, $bot_slashcommand, $bot_historyStarts, $dividerBlock, $botVersionBlock, $botSourceHeaderBlock, $botSourceDetailBlock;
 
     $helpHeaderBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>$bot_name . ' Help','emoji'=>true));
-    if (!is_null($args)) {
-      // Generate help content for specific argument provided
-      // Opening Content
-      $openingBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'The ' . $bot_name . ' will respond to ' . $args[0] . ' to perform a specific action.'));
+    $keywordPrivateBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'The `private` keyword can be appended to the _end_ of any command to privately respond to the calling user. This keyword _*must*_ be the last argument in all commands.'));
 
-      // Command Examples
-      $argumentDetailBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'Example commands (e.g. `' . $bot_slashcommand . ' ' . $args[0] . '`)'));
-      $argumentExampleBlock = array('type'=>'section','fields'=>
-        array(['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' ' . $args[0] . ' <>`'],['type'=>'mrkdwn','text'=>'Display '],
-          ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' ' . $args[0] . ' <>`'],['type'=>'mrkdwn','text'=>'Display ']
-        )
-      );
+    // Generate help content based on topic
+    switch ($args) {
+      case 'conditions':
+        // Current Conditions Detail
+        $currentConditionsHeaderBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>$bot_name . ' Help: Current Conditions','emoji'=>true));
+        $exampleCommandSection = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'Example commands (e.g. `' . $bot_slashcommand . ' [argument]`)'));
+        $exampleCommandBlock = array('type'=>'section','fields'=>
+          array(['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . '`'],['type'=>'mrkdwn','text'=>'Display current conditions'],
+            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' now`'],['type'=>'mrkdwn','text'=>'Display current conditions'],
+            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' now private`'],['type'=>'mrkdwn','text'=>'Display current conditions with a private response']
+          )
+        );
+        // Build block response
+        $blocks = [$currentConditionsHeaderBlock, $exampleCommandSection, $exampleCommandBlock, $keywordPrivateBlock, $dividerBlock, $botVersionBlock];
+        break;
+        
+      case 'forecast':
+        // Forecast Range Detail
+        $forecastHeaderBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>$bot_name . ' Help: Forecast Commands and Range','emoji'=>true));
+        $forecastDetailBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'The ' . $bot_name . ' can respond to forecast inquiries _up to 10 days_ from the current time. This means arguments (`hours`, `days`, and `week`) should fall within the specified ranges. Arguments beyond this range will return a private error or display the current conditions.'));
+        $forecastRangeBlock = array('type'=>'section','fields'=>
+          array(['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' X hour[s]`'],['type'=>'mrkdwn','text'=>'X can range `1` to `120`. Display the forecast for the specified hour'],
+            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' X day[s]`'],['type'=>'mrkdwn','text'=>'X can range `1` to `10`. Display the hour-specific forecast +X day[s]'],
+            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' Saturday`'],['type'=>'mrkdwn','text'=>'`tomorrow` or weekday name. Display the "day" forecast.'],
+            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' X week`'],['type'=>'mrkdwn','text'=>'X can only be `1`']
+          )
+        );
+        $forecastNuanceBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'It is important to understand that when providing a numeric request (`X` [hours/days/week]) the _hour-specific_ forecast will be returned based on the request time. For example, a 2-day request made at 5 p.m. will return the _hour_ forecast for 5 p.m. two days from now. Use the relative day name such as `tomorrow` or weekday names for the overall day forecast.'));
+        // Build block response
+        $blocks = [$forecastHeaderBlock, $forecastDetailBlock, $forecastRangeBlock, $forecastNuanceBlock, $keywordPrivateBlock, $dividerBlock, $botVersionBlock];
+        break;
 
-      // Build block response
-      $blocks = [$helpHeaderBlock, $openingBlock, $argumentDetailBlock, $argumentExampleBlock, $dividerBlock, $contextBlock];
-    } else {
-      // Generate the generic help overview
-      // Opening Content
-      $openingBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'The ' . $bot_name . ' responds to a number of arguments and keywords explained below. When provided _no_ argument (e.g. `' . $bot_slashcommand . '`) the bot will respond with current conditions.'));
+      case 'history':
+        // History Range Detail
+        $historyHeaderBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>$bot_name . ' Help: History Commands and Range','emoji'=>true));
+        $historyDetailBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'The ' . $bot_name . ' can respond with daily station history summaries _on or *after*_ ' . date('F j, Y', strtotime($bot_historyStarts)) . ' through the current time.'));
+        $historyRangeBlock = array('type'=>'section','fields'=>
+          array(['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' yesterday`'],['type'=>'mrkdwn','text'=>'Display daily summary for yesterday'],
+            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' X hour/day/week/month[s]`'],['type'=>'mrkdwn','text'=>'X can be any *negative* number within bot range. Display summary for the matching date'],
+            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' dateString`'],['type'=>'mrkdwn','text'=>'`dateString` should be in `YYYY-MM-DD`  or `DD-MM-YYYY` format (e.g. `2020-10-01`). Display summary for the matching date'],
+            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' dateString to dateString`'],['type'=>'mrkdwn','text'=>'`dateString` should be in `YYYY-MM-DD`  or `DD-MM-YYYY` format (e.g. `2020-10-01`). Display summary for the submitted period']
+          )
+        );
+        // Build block response
+        $blocks = [$historyHeaderBlock, $historyDetailBlock, $historyRangeBlock, $keywordPrivateBlock, $dividerBlock, $botVersionBlock];
+        break;
 
-      // Command Examples
-      $exampleCommandSection = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'Example commands (e.g. `' . $bot_slashcommand . ' [argument]`)'));
-      $exampleCommandsBlock = array('type'=>'section','fields'=>
-        array(['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' now`'],['type'=>'mrkdwn','text'=>'Display current conditions'],
-          ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' Tuesday`'],['type'=>'mrkdwn','text'=>'Display the forecast for Tuesday'],
-          ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' 85 hours`'],['type'=>'mrkdwn','text'=>'Display the forecast 85 hours from now'],
-          ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' 3 days`'],['type'=>'mrkdwn','text'=>'Display the forecast three days from now'],
-          ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' yesterday`'],['type'=>'mrkdwn','text'=>'Display summary for yesterday']
-        )
-      );
-
-      // Forecast Range Detail
-      $forecastHeaderBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Forecast Range','emoji'=>true));
-      $forecastDetailBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'The ' . $bot_name . ' can respond to forecast inquiries _up to 10 days_ from the current time. This means arguments (`hours`, `days`, and `week`) should fall within the specified ranges. Arguments beyond this range will return a private error or display the current conditions.'));
-      $forecastRangeBlock = array('type'=>'section','fields'=>
-        array(['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' X hour[s]`'],['type'=>'mrkdwn','text'=>'X can range `1` to `120`'],
-          ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' X day[s]`'],['type'=>'mrkdwn','text'=>'X can range `1` to `10`'],
-          ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' X week`'],['type'=>'mrkdwn','text'=>'X can only be `1`']
-        )
-      );
-
-      // History Range Detail
-      $historyHeaderBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'History Commands and Range','emoji'=>true));
-      $historyDetailBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'The ' . $bot_name . ' can respond with daily station history summaries _on or *after*_ ' . date('F j, Y', strtotime($bot_historyStarts)) . ' through yesterday. Requests _before_ ' . date('F j, Y', strtotime($bot_historyStarts)) . ' will return a private error.'));
-      $historyRangeBlock = array('type'=>'section','fields'=>
-        array(['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' yesterday`'],['type'=>'mrkdwn','text'=>'Display summary for yesterday'],
-          ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' X hour[s]`'],['type'=>'mrkdwn','text'=>'X can be any negative number'],
-          ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' X day[s]/week[s]/month[s]`'],['type'=>'mrkdwn','text'=>'X can be any negative number'],
-          ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' dateString`'],['type'=>'mrkdwn','text'=>'`dateString` should be in `YYYY-MM-DD`  or `DD-MM-YYYY` format (e.g. `2020-10-01`)']
-        )
-      );
-      
-      // Keyword Details
-      $keywordHeaderBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Bot Keyword Actions','emoji'=>true));
-      $keywordDetailBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'The ' . $bot_name . ' has unique keywords unrelated to the weather conditions or forecast. Supported keyword actions:'));
-      $keywordExampleBlock = array('type'=>'section','fields'=>
-        array(['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' help`'],['type'=>'mrkdwn','text'=>'Display this help information'],
-          ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' 6 hours private`'],['type'=>'mrkdwn','text'=>'Display the forecast 6 hours from now with a private response']
-        )
-      );
-      $keywordPrivateBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'The `private` keyword can be appended to the _end_ of any command to privately respond to the calling user. This keyword _*must*_ be the last argument in all commands.'));
-
-      // Help Footer
-      $botSourceHeaderBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Bot Project and Source Code','emoji'=>true));
-      $botSourceDetailBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'The ' . $bot_name . ' project page and source code on GitHub can be found at https://tempestweatherbot.mzonline.com/.'));
-
-      // Build block response
-      $blocks = [$helpHeaderBlock, $openingBlock, $exampleCommandSection, $exampleCommandsBlock, $dividerBlock, $forecastHeaderBlock, $forecastDetailBlock, $forecastRangeBlock, $dividerBlock, $historyHeaderBlock, $historyDetailBlock, $historyRangeBlock, $dividerBlock, $keywordHeaderBlock, $keywordDetailBlock, $keywordExampleBlock, $keywordPrivateBlock, $dividerBlock, $botSourceHeaderBlock, $botSourceDetailBlock, $dividerBlock, $botVersionBlock];
+      default:
+        // Generate generic help content
+        // Opening Content
+        $openingBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'The ' . $bot_name . ' responds to a number of arguments and keywords. When provided _no_ argument (e.g. `' . $bot_slashcommand . '`) the bot will respond with current conditions.'));
+        // Command Examples
+        $exampleCommandSection = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'Example commands:'));
+        $exampleCommandBlock = array('type'=>'section','fields'=>
+          array(['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . '`'],['type'=>'mrkdwn','text'=>'Display current conditions'],
+            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' Tuesday`'],['type'=>'mrkdwn','text'=>'Display the forecast for Tuesday'],
+            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' 7 days`'],['type'=>'mrkdwn','text'=>'Display the forecast seven days from now'],
+            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' yesterday`'],['type'=>'mrkdwn','text'=>'Display summary for yesterday'],
+            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' last month`'],['type'=>'mrkdwn','text'=>'Display summary for last month']
+          )
+        );
+        // Keyword Details
+        $keywordHeaderBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Bot Keywords','emoji'=>true));
+        $keywordDetailBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'The ' . $bot_name . ' responds to unique keywords unrelated to the weather conditions or forecast.'));
+        $keywordHelpCommandBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'Several detailed help topics are supported:'));
+        $keywordHelpBlock = array('type'=>'section','fields'=>
+          array(['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' help`'],['type'=>'mrkdwn','text'=>'Display this generic help information'],
+          ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' help conditions`'],['type'=>'mrkdwn','text'=>'Display help for obtaining current conditions'],
+          ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' help forecast`'],['type'=>'mrkdwn','text'=>'Display help for obtaining station forecasts'],
+          ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' help history`'],['type'=>'mrkdwn','text'=>'Display help for obtaining history summaries']
+          )
+        );
+        // Build block response
+        $blocks = [$helpHeaderBlock, $openingBlock, $exampleCommandSection, $exampleCommandBlock, $dividerBlock, $keywordHeaderBlock, $keywordDetailBlock, $keywordPrivateBlock, $keywordHelpCommandBlock, $keywordHelpBlock, $dividerBlock, $botSourceHeaderBlock, $botSourceDetailBlock, $dividerBlock, $botVersionBlock];
+        break;
     }
-
     return $blocks;
   }
 

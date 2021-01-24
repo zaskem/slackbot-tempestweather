@@ -128,7 +128,7 @@ Note: `week`s are relative to Mondays.
 
 ---
 
-  ### History Summaries
+### Weather Summaries (history)
 
   `/weather yesterday`:
 

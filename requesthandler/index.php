@@ -12,6 +12,16 @@
   require $botCodePath . '/config/bot.php';
   include $botCodePath . '/config/tempest.php';
 
+  // The `array_key_exists` function only exists in PHP 7.3.0 or above; create a fallback for < 7.3.0
+  if (! function_exists("array_key_last")) {
+    function array_key_last($array) {
+      if (!is_array($array) || empty($array)) {
+        return NULL;
+      }
+      return array_keys($array)[count($array)-1];
+    }
+  }
+
   // Set the channel from which this request was called/invoked
   $slackbot_details['channel'] = $_POST['channel_id'];
 
@@ -55,27 +65,30 @@
     // Does the user want a private response?
     $private = (strpos($_POST['text'], 'private') !== false) ? true : false;
 
-    // Determine the type/nature of a seemingly valid request
-    if (('' == $parsedArgs[0]) || ("now" == trim($parsedArgs[0])) || ("private" == trim($parsedArgs[0]))) {
-      // Does the command match any of the 'current conditions' (incl. no text/default) patterns?
-      $natureOfRequest = 'current';
-    } else if (((("last" == trim($parsedArgs[0])) || ("this" == trim($parsedArgs[0]))) && (("week" == trim($parsedArgs[1])) || ("month" == trim($parsedArgs[1])) || ("year" == trim($parsedArgs[1])))) || (strpos($_POST['text'], ' to ') !== false)) {
-      // Does the command match any of the 'history range' keyword patterns?
-      $natureOfRequest = 'historyrange';
-    } else if (("yesterday" == trim($parsedArgs[0])) || (strtotime($parsedArgs[0]) < time())) {
-      // Is the argument negative (history)?
-      $natureOfRequest = 'dayhistory';
-    } else {
-      // Assume a forecast otherwise
-      $natureOfRequest = 'forecast';
-    }
-
     // Command string can't have the private keyword, so we remove it
     if ($private) {
       array_pop($parsedArgs);
       $commandArgs = implode(' ', $parsedArgs);
     } else {
       $commandArgs = $_POST['text'];
+    }
+
+    // Determine the type/nature of a seemingly valid request
+    if (('' == $parsedArgs[0]) || ("now" == trim($parsedArgs[0])) || ("private" == trim($parsedArgs[0]))) {
+      // Does the command match any of the 'current conditions' (incl. no text/default) patterns?
+      $natureOfRequest = 'current';
+    } else if ("next" == trim($parsedArgs[0])) {
+      // Does the command match any of the 'forecast range' keyword patterns?
+      $natureOfRequest = 'forecastrange';
+    } else if (((("last" == trim($parsedArgs[0])) || ("this" == trim($parsedArgs[0]))) && (("week" == trim($parsedArgs[1])) || ("month" == trim($parsedArgs[1])) || ("year" == trim($parsedArgs[1])))) || (strpos($commandArgs, ' to ') !== false)) {
+      // Does the command match any of the 'history range' keyword patterns?
+      $natureOfRequest = 'historyrange';
+    } else if (("yesterday" == trim($parsedArgs[0])) || (strtotime($commandArgs) < time())) {
+      // Is the argument 'yesterday' or negative (history)?
+      $natureOfRequest = 'dayhistory';
+    } else {
+      // Assume a forecast otherwise
+      $natureOfRequest = 'forecast';
     }
 
     // Complete request based on its nature/path
@@ -152,7 +165,7 @@
           }
         } else {
           // Other date range provided; split by the "to" keyword
-          $historyDates = explode(' to ', $_POST['text']);
+          $historyDates = explode(' to ', $commandArgs);
           // Correct dates if submitted in the wrong order and/or if start time precedes the bot's history
           if (strtotime($historyDates[0]) > strtotime($historyDates[1])) {
             if (strtotime($historyDates[1]) < strtotime($bot_historyStarts)) {
@@ -298,6 +311,151 @@
           }
         }
         break;
+      // Forecast Range
+      case 'forecastrange':
+        // Identify the desired timestamp
+        $desiredTime = strtotime($commandArgs);
+        // We didn't match any valid time forecast string, so privately push back an 'error'
+        if ((false === $desiredTime) && (strpos($commandArgs, 'next') === false)) {
+          header("Content-Type: application/json");
+          $response = array('response_type' => 'ephemeral', 'text' => "`$_POST[text]` is not a valid time specification for this bot. Bot help is availble with the `$bot_slashcommand help` command.");
+          print json_encode($response);
+          die();
+        // A valid timestamp format for forecast was provided, so go forward
+        } else {
+          $slackbot_details['icon_emoji'] = ':crystal_ball:';
+
+          // Parse out and translate the supported statements
+          $forecastArgs = explode(' ', $commandArgs);
+          $dayKeyword = strpos($commandArgs, 'day');
+          $weekKeyword = strpos($commandArgs, 'week');
+          // Show a forecast "range" up to 10 days
+          $forecastRange = ("next" == trim($forecastArgs[0]));
+          if ($forecastRange) {
+            unset($forecastArgs[0]);
+            $commandArgs = implode(' ', $forecastArgs);
+          }
+
+          // Modify the $commandArgs for day/week keywords
+          if ($dayKeyword || $weekKeyword) {
+              $matchStamp = strtotime("midnight " . $commandArgs);
+          } else {
+            $matchStamp = strtotime($commandArgs);
+          }
+
+          $hoursToForecast = ($matchStamp - time()) / 3600;
+
+          getStationForecast();
+          $stationForecast = include $botCodePath . '/config/stationForecast.generated.php';
+          $dailyData = $stationForecast['forecast']['daily'];
+          $hourlyData = $stationForecast['forecast']['hourly'];
+
+          // Look for "day" matches from our argument(s), specifically the last one
+          $dayCount = 0;
+          $dayMatches = array();
+          foreach ($dailyData as $dayForecast) {
+            if (in_array($matchStamp, $dayForecast)) {
+              $dayMatches[] = $dayCount;
+              }
+            $dayCount++;
+          }
+
+          // Look for "hour" matches from our argument(s), specifically the last one
+          $hourvalue = (round($matchStamp / 3600) * 3600);
+          $hourCount = 0;
+          $hourMatches = array();
+          foreach ($hourlyData as $hourlyForecast) {
+            if (in_array($hourvalue, $hourlyForecast)) {
+              $hourMatches[] = $hourCount;
+            }
+            $hourCount++;
+          }
+
+          // Do we match a "day" string? (preferred forecast)
+          if (count($dayMatches) > 0) {
+            $dayForecasts = array();
+            $day = 0;
+            while  ($day <= $dayMatches[0]) {
+              $obsData = $dailyData[$day];
+
+              $dayForecasts[] = array(
+                'timestamp' => date('l, F j', $obsData['day_start_local']),
+                'icon' => $obsData['icon'],
+                'high_temperature' => $obsData['air_temp_high'] . $tempUnitLabel,
+                'low_temperature' => $obsData['air_temp_low'] . $tempUnitLabel,
+                'precip_type' => (isset($obsData['precip_type'])) ? $obsData['precip_type'] : '',
+                'precip_probability' => $obsData['precip_probability'] . "%",
+                'conditions' => $obsData['conditions'],
+                'sunrise' => date('g:i a', $obsData['sunrise']),
+                'sunset' => date('g:i a', $obsData['sunset'])
+              );
+
+              $day++;
+            }
+
+            // Create basic text response (fallback) -- just the _last_ forecast match
+            $responseText = "The forecast for " . $dayForecasts[$dayMatches[0]]['timestamp'] . ": " . $dayForecasts[$dayMatches[0]]['conditions'] . " with a high of " . $dayForecasts[$dayMatches[0]]['high_temperature'] . " (low: " . $dayForecasts[$dayMatches[0]]['low_temperature'] . ").";
+            if ($dayForecasts[$dayMatches[0]]['precip_probability']> 0) { $responseText .= " There's a " . $dayForecasts[$dayMatches[0]]['precip_probability'] . " chance of " . $dayForecasts[$dayMatches[0]]['precip_type'] . "."; }
+            $responseText .= " Sunrise: " . $dayForecasts[$dayMatches[0]]['sunrise'] . " | Sunset: " . $dayForecasts[$dayMatches[0]]['sunset'];
+
+            // Use blocks for prettier and complete response
+            $slackbot_details['blocks'] = getForecastDayRangeBlocks($dayForecasts);
+
+            $result = SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
+            if ($debug_bot) {
+              header("Content-Type: application/json");
+              print json_encode(array('response_type' => 'ephemeral', 'text' => $_POST['command'] . ' ' . $_POST['text'] . ' output response: ' . $result));
+            }
+          // Do we match an "hourly" string?
+          } else if (count($hourMatches) > 0) {
+            // Adjust our forecast cadence based on an 8-hour interval (this keeps the block output under Slack's maximum of 50)
+            $useEveryXHour = ceil((($matchStamp - time()) / 3600) / 8);
+
+            $hourForecasts = array();
+            $hour = 0;
+            while  ($hour <= $hourMatches[0]) {
+              $obsData = $hourlyData[$hour];
+
+              $hourForecasts[] = array(
+                'timestamp' => ($hoursToForecast > 8) ? date('l, F j, g:i a', $obsData['time']) : date('g:i a', $obsData['time']),
+                'icon' => $obsData['icon'],
+                'temperature' => $obsData['air_temperature'] . $tempUnitLabel,
+                'pressure' => $obsData['sea_level_pressure'] . $pressureUnitLabel,
+                'precip_type' => (isset($obsData['precip_type'])) ? $obsData['precip_type'] : '',
+                'precip_probability' => $obsData['precip_probability'] . "%",
+                'conditions' => $obsData['conditions'],
+                'feelsLike' => $obsData['feels_like'] . $tempUnitLabel,
+                'windAvg' => $obsData['wind_avg'] . " $windUnitLabel",
+                'windDir' => $obsData['wind_direction_cardinal']
+              );
+
+              $hour += $useEveryXHour;
+            }
+
+            // Create basic text response (fallback) -- just the _last_ forecast match
+            // Get the last ID since we dynamically adjust to keep ourselves under the block limit
+            $lastForecast = array_key_last($hourForecasts);
+            $responseText = "The forecast for " . $hourForecasts[$lastForecast]['timestamp'] . ": " . $hourForecasts[$lastForecast]['temperature'] . " (feels like " . $hourForecasts[$lastForecast]['feelsLike'] . ")";
+            if ($hourForecasts[$lastForecast]['precip_probability']> 0) { $responseText .= " with a " . $hourForecasts[$lastForecast]['precip_probability'] . " chance of " . $hourForecasts[$lastForecast]['precip_type'] . ". "; }
+            $responseText .= $hourForecasts[$lastForecast]['windDir'] . " winds averaging " . $hourForecasts[$lastForecast]['windAvg'] . ".";
+
+            // Use blocks for prettier response
+            $slackbot_details['blocks'] = getForecastHourRangeBlocks($hourForecasts);
+
+            $result = SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
+            if ($debug_bot) {
+              header("Content-Type: application/json");
+              print json_encode(array('response_type' => 'ephemeral', 'text' => $_POST['command'] . ' ' . $_POST['text'] . ' output response: ' . $result));
+            }
+          // We didn't match any valid forecast string, so privately push back an 'error'
+          } else {
+            header("Content-Type: application/json");
+            $response = array('response_type' => 'ephemeral', 'text' => "`$_POST[text]` is not a valid time specification for this bot. Bot help is availble with the `$bot_slashcommand help` command.");
+            print json_encode($response);
+            die();
+          }
+        }
+        break;
       // Forecast
       case 'forecast':
         // Identify the desired timestamp
@@ -310,8 +468,18 @@
           die();
         // A valid timestamp format for forecast was provided, so go forward
         } else {
-          $timeNow = strtotime("now");
-          $hoursToForecast = ($desiredTime - $timeNow) / 3600;
+          // Parse out and translate the supported statements
+          $dayKeyword = strpos($commandArgs, 'day');
+          $weekKeyword = strpos($commandArgs, 'week');
+
+          // Modify the $commandArgs for day/week keywords
+          if ($dayKeyword || $weekKeyword) {
+              $matchStamp = strtotime("midnight " . $commandArgs);
+          } else {
+            $matchStamp = strtotime($commandArgs);
+          }
+
+          $hoursToForecast = ($desiredTime - time()) / 3600;
 
           getStationForecast();
           $stationForecast = include $botCodePath . '/config/stationForecast.generated.php';
@@ -322,14 +490,14 @@
           $dayCount = 0;
           $dayMatches = array();
           foreach ($dailyData as $dayForecast) {
-            if (in_array(strtotime($commandArgs), $dayForecast)) {
+            if (in_array($matchStamp, $dayForecast)) {
               $dayMatches[] = $dayCount;
               }
             $dayCount++;
           }
 
           // Look for "hour" matches from our argument(s)
-          $hourvalue = (round(strtotime($commandArgs) / 3600) * 3600);
+          $hourvalue = (round($matchStamp / 3600) * 3600);
           $hourCount = 0;
           $hourMatches = array();
           foreach ($hourlyData as $hourlyForecast) {
@@ -380,7 +548,7 @@
               'precip_probability' => $obsData['precip_probability'] . "%",
               'conditions' => $obsData['conditions'],
               'feelsLike' => $obsData['feels_like'] . $tempUnitLabel,
-              'windAvg' => $obsData['wind_avg'] . $windUnitLabel,
+              'windAvg' => $obsData['wind_avg'] . " $windUnitLabel",
               'windDir' => $obsData['wind_direction_cardinal']
             );
 

@@ -41,7 +41,7 @@
             ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' X week`'],['type'=>'mrkdwn','text'=>'X can only be `1`']
           )
         );
-        $forecastNuanceBlock = array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>'When providing a numeric request (e.g. ` X [hours/days/week]`) the _hour-specific_ forecast will be returned based on the request time. For example, a 2-day request made at 5 p.m. will return the _hour_ forecast for 5 p.m. two days from now.')]);
+        $forecastNuanceBlock = array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>'When providing a numeric request (e.g. ` X hours`) the _hour-specific_ forecast will be returned based on the request time. However, an `X days` request made at 5 p.m. will return the _daily_ forecast for two days from now.')]);
         $forecastRelativeBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'Relative keywords (`tomorrow`, `next`, and weekday names) can also be used:'));
         $forecastRelativeRangeBlock = array('type'=>'section','fields'=>
           array(['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' tomorrow`'],['type'=>'mrkdwn','text'=>'Display forecast for tomorrow'],

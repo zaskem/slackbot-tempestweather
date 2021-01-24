@@ -61,7 +61,4 @@ There are several possible causes of trouble in using the bot. Generally speakin
 Setting `$debug_bot` to `true` in `config/bot.php` will output much information about the process and arguments provided. These are relayed in the Acknowledgement response for a given command and will show up as a private response in Slack.
 
 ## Enhancements on the Radar
-Several [enhancements](https://github.com/zaskem/slackbot-tempestweather/labels/enhancement) are in the queue for future development. These are tracked via GitHub, but key enhancements on the radar include:
-
-* Handling lightning data with announcements
-* Obtaining and doing things with previous observations
+Several [enhancements](https://github.com/zaskem/slackbot-tempestweather/labels/enhancement) are in the queue for future development. These are tracked and managed via GitHub.

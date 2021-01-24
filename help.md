@@ -89,6 +89,7 @@ Specify a specific date or date range. `dateString` should be in `YYYY-MM-DD` or
 Note: `week`s are relative to Mondays.
 
 ---
+
 ## Example Responses in Slack
 
 ### Current Conditions
@@ -98,6 +99,7 @@ Note: `week`s are relative to Mondays.
   ![Example current conditions response](https://github.com/zaskem/slackbot-tempestweather/blob/gh-pages/images/current.png?raw=true)
 
 ---
+
 ### Weather Forecasts
 
   `/weather Thursday`:
@@ -125,6 +127,7 @@ Note: `week`s are relative to Mondays.
   ![Example "tomorrow" forecast with a private response](https://github.com/zaskem/slackbot-tempestweather/blob/gh-pages/images/tomorrow-private.png?raw=true)
 
 ---
+
   ### History Summaries
 
   `/weather yesterday`:

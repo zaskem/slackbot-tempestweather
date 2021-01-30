@@ -10,6 +10,8 @@ The general idea is to have a Slack slash command (e.g. `/weather`) which respon
 ## Bot Data Source and Information Flow
 Data is sourced from the Tempest API, and a response crafted based on the Slack command arguments. Users can optionally add the `private` keyword in their command (e.g. `/weather tomorrow private`) which will send a private response versus the default behavior of posting to the current channel. Posts to Slack happen with a combination of Slack's webhooks (private and error/debugging responses) and the Slack Web API.
 
+A bot home tab, if enabled, provides a condensed view of current conditions, a four-hour forecast, and a five-day forecast.
+
 ## Bot Source Code
 The [GitHub repo](https://github.com/zaskem/slackbot-tempestweather) contains the basics for getting started with the bot in your own Slack workspace.
 

@@ -148,3 +148,10 @@ Note: `week`s are relative to Mondays.
   `/weather 2020-10-10 to 2020-10-11`:
 
   ![Example two consecutive day summary for October 10-11, 2020](https://github.com/zaskem/slackbot-tempestweather/blob/gh-pages/images/2020-10-10-2020-10-11.png?raw=true)
+  
+---
+
+### Bot Home Tab
+The bot has an available home tab which, if optionally enabled, provides for a condensed single-page view of current conditions, four-hour forecast, and five-day forecast.
+
+  ![Example bot home tab view](https://github.com/zaskem/slackbot-tempestweather/blob/gh-pages/images/hometab.png?raw=true)

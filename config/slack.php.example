@@ -20,4 +20,6 @@
   // `chat.postMessage` requires scope `chat:write` for bot token
   $slackGetUsers = 'https://slack.com/api/users.list';
   // `users.list` requires scope `users:read` for bot token
+  $slackHomeViewPublish = 'https://slack.com/api/views.publish';
+  // `views.publish`: for best results the event listener `app_home_opened` should be enabled for this bot token
 ?>

@@ -69,7 +69,7 @@ There are several possible causes of trouble in using the bot. Generally speakin
 
 * Failure to source data from Tempest;
 * A super wonky time argument that falls outside the bot's expected values or argument structure (now ... +10 days);
-* Misconfigured request or event responder URLs (often the result of not properly setting `$botCodePath`; and)
+* Misconfigured request or event responder URLs (often the result of not properly setting `$botCodePath`); and
 * Bad block structure/JSON for the Slack response.
 
 Setting `$debug_bot` to `true` in `config/bot.php` will output much information about the process and arguments provided. These are relayed in the Acknowledgement response for a given command and will show up as a private response in Slack.

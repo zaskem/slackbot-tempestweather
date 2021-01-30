@@ -28,7 +28,7 @@
   // Grab the generated list of valid users in the accompanying Slack workspace
   $slackUsers = include $botCodePath . '/config/slackUsers.generated.php';
   // Look for "authorization" to use this (is the requesting user at least in the known Slack users)
-  if (!in_array($_POST['user_id'], $slackUsers)) {
+  if (!array_search($_POST['user_id'], array_column($slackUsers['members'], 'id'))) {
     header("Content-Type: application/json");
     $response = array('response_type' => 'ephemeral', 'text' => 'Not authorized.');
     print json_encode($response);

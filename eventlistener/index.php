@@ -15,7 +15,7 @@
   // Grab the generated list of valid users in the accompanying Slack workspace
   $slackUsers = include $botCodePath . '/config/slackUsers.generated.php';
   // Look for "authorization" to use this (is the requesting user at least in the known Slack users)
-  if (array_search($eventArray['event']['user'], array_column($slackUsers['members'], 'id')) > 0) {
+  if (array_search($eventArray['event']['user'], array_column($slackUsers['members'], 'id'))) {
     // Determine what to do based on the event type
     switch ($eventArray['event']['type']) {
       case 'app_home_opened': // App Home Interaction

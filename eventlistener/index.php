@@ -9,9 +9,8 @@
   require $botCodePath . '/SlackAppHomeGenerator.php';
 
   // Grab the event input
-//  $event = file_get_contents("php://input");
-//  $eventArray = json_decode($event, true);
-  $eventArray = include $botCodePath . '/config/post-home.php';
+  $event = file_get_contents("php://input");
+  $eventArray = json_decode($event, true);
 
   // Grab the generated list of valid users in the accompanying Slack workspace
   $slackUsers = include $botCodePath . '/config/slackUsers.generated.php';

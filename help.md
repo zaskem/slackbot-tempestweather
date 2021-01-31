@@ -79,6 +79,7 @@ Specify a specific date or date range. `dateString` should be in `YYYY-MM-DD` or
 | `/weather dateString to dateString` | Display summary for the submitted period |
 
 **Relative keywords** (`today`, `yesterday`, `last`, and `this`) can also be used:
+
 | Command | Description |
 |---|---|
 | `/weather today` | Display daily summary for yesterday |

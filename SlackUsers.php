@@ -1,6 +1,6 @@
 <?php
-  require_once __DIR__ . '/config/slack.php';
   require_once __DIR__ . '/config/bot.php';
+  require_once __DIR__ . '/config/slack.php';
 
   /**
    * GetSlackUsers() - function to obtain a list of Slack workspace users.

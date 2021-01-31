@@ -1,8 +1,8 @@
 <?php
-  require __DIR__ . '/TempestAPIFunctions.php';
-  require __DIR__ . '/UtilityFunctions.php';
-  require_once __DIR__ . '/config/slack.php';
   require_once __DIR__ . '/config/bot.php';
+  require_once __DIR__ . '/config/slack.php';
+  require __DIR__ . '/TempestAPIFunctions.php';
+  require __DIR__ . '/TempestObservation.php';
 
   // Static/Reused block content
   $botVersionBlock = array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>$bot_name . ' version: ' . $bot_version)]);
@@ -25,18 +25,10 @@
     // Current Observation
     getLastStationObservation();
     $lastObservation = include __DIR__ . '/config/lastObservation.generated.php';
-    $obsData = $lastObservation['obs'][0];
-  
-    $currentObservation = array(
-      'timestamp' => date('g:i a', $obsData['timestamp']),
-      'temperature' => convertCToF($obsData['air_temperature']) . $tempUnitLabel,
-      'pressure' => convertMbToInHg($obsData['sea_level_pressure']) . "$pressureUnitLabel",
-      'feelsLike' => convertCToF($obsData['feels_like']) . $tempUnitLabel,
-      'windAvg' => convertMPSToMPH($obsData['wind_avg']) . " $windUnitLabel",
-      'windDir' => convertDegreesToWindDirection($obsData['wind_direction'])
-    );
-    array_push($blks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Currently (' . $currentObservation['timestamp'] . '):*')));
-    array_push($blks, array('type'=>'section','fields'=>array(['type'=>'mrkdwn','text'=>':thermometer: ' . $currentObservation['temperature'] . ' (feels like ' . $currentObservation['feelsLike'] . ')'], ['type'=>'mrkdwn','text'=>':dash: Wind ' . $currentObservation['windDir'] . ' ' . $currentObservation['windAvg']])), $dividerBlock, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Next four hours:*')));
+    $observation = new TempestObservation('current', $lastObservation['obs'][0]);
+
+    array_push($blks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Currently (' . $observation->f_timestamp . '):*')));
+    array_push($blks, array('type'=>'section','fields'=>array(['type'=>'mrkdwn','text'=>':thermometer: ' . $observation->f_temperature . ' (feels like ' . $observation->f_feelsLike . ')'], ['type'=>'mrkdwn','text'=>':dash: Wind ' . $observation->f_windDir . ' ' . $observation->f_windAvg])), $dividerBlock, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Next four hours:*')));
 
 
     // Grab the forecast data
@@ -50,21 +42,10 @@
     $hourCount = 4;
     $hour = 0;
     while  ($hour < $hourCount) {
-      $obsData = $hourlyData[$hour];
-      $observation = array(
-        'timestamp' => date('g:i a', $obsData['time']),
-        'icon' => $obsData['icon'],
-        'temperature' => $obsData['air_temperature'] . $tempUnitLabel,
-        'pressure' => $obsData['sea_level_pressure'] . $pressureUnitLabel,
-        'precip_type' => (isset($obsData['precip_type'])) ? $obsData['precip_type'] : '',
-        'precip_probability' => $obsData['precip_probability'] . "%",
-        'conditions' => $obsData['conditions'],
-        'feelsLike' => $obsData['feels_like'] . $tempUnitLabel,
-        'windAvg' => $obsData['wind_avg'] . " $windUnitLabel",
-        'windDir' => $obsData['wind_direction_cardinal']
-      );
-      array_push($blks, array('type'=>'section','fields'=>array(['type'=>'mrkdwn','text'=>'*' . $observation['timestamp'] . '*: ' . $slackConditionIcons[$observation['icon']] . ' ' . $observation['temperature'] . ' (feels like ' . $observation['feelsLike'] . ')'],
-      ($observation['precip_probability'] > 0) ? ['type'=>'plain_text','text'=>$observation['precip_probability'] . ' chance ' . $observation['precip_type'] . ' | ' . $observation['windDir'] . ' ' . $observation['windAvg'],'emoji'=>true] : ['type'=>'plain_text','text'=>$observation['windDir'] . ' ' . $observation['windAvg'],'emoji'=>true])));
+      $observation = new TempestObservation('hour_forecast', $hourlyData[$hour]);
+
+      array_push($blks, array('type'=>'section','fields'=>array(['type'=>'mrkdwn','text'=>'*' . $observation->f_timestamp . '*: ' . $slackConditionIcons[$observation->icon] . ' ' . $observation->f_temperature . ' (feels like ' . $observation->f_feelsLike . ')'],
+      ($observation->precip_probability > 0) ? ['type'=>'plain_text','text'=>$observation->f_precip_probability . ' chance ' . $observation->f_precip_type . ' | ' . $observation->f_windDir . ' ' . $observation->f_windAvg,'emoji'=>true] : ['type'=>'plain_text','text'=>$observation->f_windDir . ' ' . $observation->f_windAvg,'emoji'=>true])));
       $hour++;
     }
     array_push($blks, $dividerBlock, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Next five days:*')));
@@ -74,20 +55,10 @@
     $dayCount = 5;
     $day = 1;
     while  ($day <= $dayCount) {
-      $obsData = $dailyData[$day];
-      $observation = array(
-        'timestamp' => date('l', $obsData['day_start_local']),
-        'icon' => $obsData['icon'],
-        'high_temperature' => $obsData['air_temp_high'] . $tempUnitLabel,
-        'low_temperature' => $obsData['air_temp_low'] . $tempUnitLabel,
-        'precip_type' => (isset($obsData['precip_type'])) ? $obsData['precip_type'] : '',
-        'precip_probability' => $obsData['precip_probability'] . "%",
-        'conditions' => $obsData['conditions'],
-        'sunrise' => date('g:i a', $obsData['sunrise']),
-        'sunset' => date('g:i a', $obsData['sunset'])
-      );
-      array_push($blks, array('type'=>'section','fields'=>array(['type'=>'mrkdwn','text'=>'*' . $observation['timestamp'] . '*: ' . $slackConditionIcons[$observation['icon']]],['type'=>'plain_text','text'=>' high: ' . $observation['high_temperature'] . ', low: ' . $observation['low_temperature']],['type'=>'plain_text','text'=>' ','emoji'=>true],
-      ($observation['precip_probability'] > 0) ? ['type'=>'plain_text','text'=>$observation['conditions'] . ' (' . $observation['precip_probability'] . ' chance ' . $observation['precip_type'] . ')','emoji'=>true] : ['type'=>'plain_text','text'=>$observation['conditions'],'emoji'=>true])));
+      $observation = new TempestObservation('day_forecast', $dailyData[$day]);
+
+      array_push($blks, array('type'=>'section','fields'=>array(['type'=>'mrkdwn','text'=>'*' . $observation->f_shortTimestamp . '*: ' . $slackConditionIcons[$observation->icon]],['type'=>'plain_text','text'=>' high: ' . $observation->f_high_temperature . ', low: ' . $observation->f_low_temperature],['type'=>'plain_text','text'=>' ','emoji'=>true],
+      ($observation->precip_probability > 0) ? ['type'=>'plain_text','text'=>$observation->conditions . ' (' . $observation->f_precip_probability . ' chance ' . $observation->f_precip_type . ')','emoji'=>true] : ['type'=>'plain_text','text'=>$observation->conditions,'emoji'=>true])));
 
       $day++;
     }

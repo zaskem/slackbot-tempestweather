@@ -127,9 +127,9 @@
     global $helpContextBlock, $dividerBlock;
 
     // Current Observations Block Content
-    $headerBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Current conditions at ' . $observation['timestamp'],'emoji'=>true));
-    $temperatureBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'Temperature: '. $observation['temperature'] . ' (feels like ' . $observation['feelsLike'] . ')'));
-    $windBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'Wind at ' . $observation['windAvg'] . ' from the ' . $observation['windDir'] . '.'));
+    $headerBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Current conditions at ' . $observation->f_timestamp,'emoji'=>true));
+    $temperatureBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'Temperature: '. $observation->f_temperature . ' (feels like ' . $observation->f_feelsLike . ')'));
+    $windBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'Wind at ' . $observation->f_windAvg . ' from the ' . $observation->f_windDir . '.'));
 
     // Build block response
     $blocks = [$headerBlock, $temperatureBlock, $windBlock, $dividerBlock, $helpContextBlock];
@@ -142,13 +142,13 @@
     global $helpContextBlock, $dividerBlock;
 
     // "Day" Forecast Block Content
-    $headerBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Forecast for ' . $observation['timestamp'],'emoji'=>true));
-    $conditionsBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$observation['conditions'] . ' with a high of ' . $observation['high_temperature'] . ' (low: ' . $observation['low_temperature'] . ').'));
-    $precipBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'There is a ' . $observation['precip_probability'] . ' chance of ' . $observation['precip_type'] . '.'));
-    $sunBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'Sunrise: ' . $observation['sunrise'] . ' | Sunset: ' . $observation['sunset'] . '.'));
+    $headerBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Forecast for ' . $observation->f_timestamp,'emoji'=>true));
+    $conditionsBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$observation->conditions . ' with a high of ' . $observation->f_high_temperature . ' (low: ' . $observation->f_low_temperature . ').'));
+    $precipBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'There is a ' . $observation->f_precip_probability . ' chance of ' . $observation->f_precip_type . '.'));
+    $sunBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'Sunrise: ' . $observation->f_sunrise . ' | Sunset: ' . $observation->f_sunset . '.'));
 
     // Build block response
-    if ($observation['precip_probability'] > 0) {
+    if ($observation->precip_probability > 0) {
       $blocks = [$headerBlock, $conditionsBlock, $precipBlock, $sunBlock, $dividerBlock, $helpContextBlock];
     } else {
       $blocks = [$headerBlock, $conditionsBlock, $sunBlock, $dividerBlock, $helpContextBlock];
@@ -162,13 +162,13 @@
     global $helpContextBlock, $dividerBlock;
 
     // "Hour" Forecast Block Content
-    $headerBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Forecast for ' . $observation['timestamp'],'emoji'=>true));
-    $conditionsBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$observation['conditions'] . ', ' . $observation['temperature'] . ' (feels like ' . $observation['feelsLike'] . ')'));
-    $precipBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'There is a ' . $observation['precip_probability'] . ' chance of ' . $observation['precip_type'] . '.'));
-    $windBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$observation['windDir'] . ' winds averaging ' . $observation['windAvg'] . '.'));
+    $headerBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Forecast for ' . $observation->f_timestamp,'emoji'=>true));
+    $conditionsBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$observation->conditions . ', ' . $observation->f_temperature . ' (feels like ' . $observation->f_feelsLike . ')'));
+    $precipBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'There is a ' . $observation->f_precip_probability . ' chance of ' . $observation->f_precip_type . '.'));
+    $windBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$observation->f_windDir . ' winds averaging ' . $observation->f_windAvg . '.'));
 
     // Build block response
-    if ($observation['precip_probability'] > 0) {
+    if ($observation->precip_probability > 0) {
       $blocks = [$headerBlock, $conditionsBlock, $precipBlock, $windBlock, $dividerBlock, $helpContextBlock];
     } else {
       $blocks = [$headerBlock, $conditionsBlock, $windBlock, $dividerBlock, $helpContextBlock];
@@ -183,19 +183,19 @@
 
     $lastObs = count($observations) - 1;
     // "Day" Forecast Block Content
-    $headerBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Forecast for ' . $observations[0]['timestamp'] . ' to ' . $observations[$lastObs]['timestamp'],'emoji'=>true));
+    $headerBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Forecast for ' . $observations[0]->f_timestamp . ' to ' . $observations[$lastObs]->f_timestamp,'emoji'=>true));
     $blocks[] = $headerBlock;
 
     foreach ($observations as $observation) {
-      $dayHeaderBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>$slackConditionIcons[$observation['icon']] . ' ' . $observation['timestamp'] . ':','emoji'=>true));
-      $conditionsBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$observation['conditions'] . ' with a high of ' . $observation['high_temperature'] . ' (low: ' . $observation['low_temperature'] . ').'));
-      $precipBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'There is a ' . $observation['precip_probability'] . ' chance of ' . $observation['precip_type'] . '.'));
-      $sunBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'Sunrise: ' . $observation['sunrise'] . ' | Sunset: ' . $observation['sunset'] . '.'));
+      $dayHeaderBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>$slackConditionIcons[$observation->icon] . ' ' . $observation->f_timestamp . ':','emoji'=>true));
+      $conditionsBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$observation->conditions . ' with a high of ' . $observation->f_high_temperature . ' (low: ' . $observation->f_low_temperature . ').'));
+      $precipBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'There is a ' . $observation->f_precip_probability . ' chance of ' . $observation->f_precip_type . '.'));
+      $sunBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'Sunrise: ' . $observation->f_sunrise . ' | Sunset: ' . $observation->f_sunset . '.'));
 
       $blocks[] = $dividerBlock;
       $blocks[] = $dayHeaderBlock;
       $blocks[] = $conditionsBlock;
-      if ($observation['precip_probability'] > 0) {
+      if ($observation->f_precip_probability > 0) {
         $blocks[] = $precipBlock;
       }
       $blocks[] = $sunBlock;
@@ -213,19 +213,19 @@
 
     $lastObs = count($observations) - 1;
     // "Hour" Forecast Block Content
-    $headerBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Forecast for ' . $observations[0]['timestamp'] . ' to ' . $observations[$lastObs]['timestamp'],'emoji'=>true));
+    $headerBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Forecast for ' . $observations[0]->f_timestamp . ' to ' . $observations[$lastObs]->f_timestamp,'emoji'=>true));
     $blocks[] = $headerBlock;
 
     foreach ($observations as $observation) {
-      $hourHeaderBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>$slackConditionIcons[$observation['icon']] . ' ' . $observation['timestamp'] . ':','emoji'=>true));
-      $conditionsBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$observation['conditions'] . ', ' . $observation['temperature'] . ' (feels like ' . $observation['feelsLike'] . ')'));
-      $precipBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'There is a ' . $observation['precip_probability'] . ' chance of ' . $observation['precip_type'] . '.'));
-      $windBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$observation['windDir'] . ' winds averaging ' . $observation['windAvg'] . '.'));
+      $hourHeaderBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>$slackConditionIcons[$observation->icon] . ' ' . $observation->f_timestamp . ':','emoji'=>true));
+      $conditionsBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$observation->conditions . ', ' . $observation->f_temperature . ' (feels like ' . $observation->f_feelsLike . ')'));
+      $precipBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'There is a ' . $observation->f_precip_probability . ' chance of ' . $observation->f_precip_type . '.'));
+      $windBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$observation->f_windDir . ' winds averaging ' . $observation->f_windAvg . '.'));
 
       $blocks[] = $dividerBlock;
       $blocks[] = $hourHeaderBlock;
       $blocks[] = $conditionsBlock;
-      if ($observation['precip_probability'] > 0) {
+      if ($observation->precip_probability > 0) {
         $blocks[] = $precipBlock;
       }
       $blocks[] = $windBlock;
@@ -238,31 +238,31 @@
   }
 
 
-  function getDayHistoryBlocks($summaryData, $args = null) {
+  function getDayHistoryBlocks($observation, $args = null) {
     global $helpContextBlock, $dividerBlock;
 
     // Daily History Block Content
-    $headerBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Weather Summary for ' . $summaryData['historyDate'],'emoji'=>true));
+    $headerBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Weather Summary for ' . $observation->historyDateStart,'emoji'=>true));
     $temperatureBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Temperature:*
-    _High:_ ' . $summaryData['highTemp'] . '
-    _Low:_ ' . $summaryData['lowTemp'] . '
-    _Average for the day:_ ' . $summaryData['avgTemp']));
+    _High:_ ' . $observation->f_highTemp . '
+    _Low:_ ' . $observation->f_lowTemp . '
+    _Average for the day:_ ' . $observation->f_avgTemp));
     $pressureBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Pressure:*
-    _High:_ ' . $summaryData['highPress'] . '
-    _Low:_ ' . $summaryData['lowPress'] . '
-    _Trend for the day:_ ' . $summaryData['pressTrend']));
+    _High:_ ' . $observation->f_highPress . '
+    _Low:_ ' . $observation->f_lowPress . '
+    _Trend for the day:_ ' . $observation->pressTrend));
     $sunlightBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Sunlight/Brightness:*
-    _High UV Index:_ ' . $summaryData['highUV'] . '
-    _Highest Solar Radiation:_ ' . $summaryData['highSolarRad'] . '
-    _Highest Brightness:_ ' . $summaryData['highLux']));
+    _High UV Index:_ ' . $observation->highUV . '
+    _Highest Solar Radiation:_ ' . $observation->f_highSolarRad . '
+    _Highest Brightness:_ ' . $observation->f_highLux));
     $windBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Wind Conditions:*
-    _High Gust:_ ' . $summaryData['highWindDir'] . ' ' . $summaryData['highWindGust'] . ' at ' . $summaryData['highWindTimestamp'] . '
-    _Average Speed:_ ' . $summaryData['windAvg']));
+    _High Gust:_ ' . $observation->highWindDir . ' ' . $observation->f_highWindGust . $observation->highWindTimestamp . '
+    _Average Speed:_ ' . $observation->f_windAvg));
     $precipBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Precipitation and Lightning:*
-    _Daily Rainfall:_ ' . $summaryData['dailyPrecip']));
-    if ($summaryData['strikeCount'] > 0) {
-      $lightningBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'_Lightning Strikes Detected:_ ' . $summaryData['strikeCount'] . '
-      _Closest Lightning Strike:_ ' . $summaryData['closestStrike'] . ' at ' . $summaryData['closeStrikeTimestamp']));
+    _Daily Rainfall:_ ' . $observation->f_dailyPrecip));
+    if ($observation->strikeCount > 0) {
+      $lightningBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'_Lightning Strikes Detected:_ ' . $observation->f_strikeCount . '
+      _Closest Lightning Strike:_ ' . $observation->f_closestStrike . ' at ' . $observation->closeStrikeTimestamp));
     } else {
       $lightningBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'_No Lightning Detected_'));
     }
@@ -274,25 +274,25 @@
   }
 
 
-  function getMultiDayHistoryBlocks($summaryData, $args = null) {
+  function getMultiDayHistoryBlocks($observations, $args = null) {
     global $helpContextBlock, $dividerBlock;
 
     // History Range Block Content
-    $headerBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Weather Summary for ' . $summaryData['historyDateStart'] . ' through ' . $summaryData['historyDateEnd'],'emoji'=>true));
+    $headerBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Weather Summary for ' . $observations->historyDateStart . ' through ' . $observations->historyDateEnd,'emoji'=>true));
     $temperatureBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Temperature:*
-    _High:_ ' . $summaryData['highTemp'] . '
-    _Low:_ ' . $summaryData['lowTemp'] . '
-    _Average over the period:_ ' . $summaryData['avgTemp']));
+    _High:_ ' . $observations->f_highTemp . '
+    _Low:_ ' . $observations->f_lowTemp . '
+    _Average over the period:_ ' . $observations->f_avgTemp));
     $sunlightBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Sunlight/Brightness:*
-    _High UV Index:_ ' . $summaryData['highUV'] . '
-    _Highest Solar Radiation:_ ' . $summaryData['highSolarRad'] . '
-    _Highest Brightness:_ ' . $summaryData['highLux']));
+    _High UV Index:_ ' . $observations->highUV . '
+    _Highest Solar Radiation:_ ' . $observations->f_highSolarRad . '
+    _Highest Brightness:_ ' . $observations->f_highLux));
     $windBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Wind Conditions:*
-    _High Gust:_ ' . $summaryData['highWindDir'] . ' ' . $summaryData['highWindGust'] . ' on ' . $summaryData['highWindTimestamp'] . '
-    _Average Speed:_ ' . $summaryData['windAvg']));
-    if ($summaryData['strikeCount'] > 0) {
-      $lightningBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'_Lightning Strikes Detected:_ ' . $summaryData['strikeCount'] . '
-      _Closest Lightning Strike:_ ' . $summaryData['closestStrike'] . ' on ' . $summaryData['closeStrikeTimestamp']));
+    _High Gust:_ ' . $observations->highWindDir . ' ' . $observations->f_highWindGust . $observations->long_highWindTimestamp . '
+    _Average Speed:_ ' . $observations->f_windAvg));
+    if ($observations->strikeCount > 0) {
+      $lightningBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'_Lightning Strikes Detected:_ ' . $observations->f_strikeCount . '
+      _Closest Lightning Strike:_ ' . $observations->f_closestStrike . ' on ' . $observations->closeStrikeTimestamp));
     } else {
       $lightningBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'_No Lightning Detected_'));
     }

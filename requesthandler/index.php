@@ -74,7 +74,7 @@
     }
 
     // Determine the type/nature of a seemingly valid request
-    if (('' == $parsedArgs[0]) || ("now" == trim($parsedArgs[0])) || ("private" == trim($parsedArgs[0]))) {
+    if ((!isset($parsedArgs[0])) || ('' == $parsedArgs[0]) || ("now" == trim($parsedArgs[0])) || ("private" == trim($parsedArgs[0]))) {
       // Does the command match any of the 'current conditions' (incl. no text/default) patterns?
       $natureOfRequest = 'current';
     } else if ("next" == trim($parsedArgs[0])) {

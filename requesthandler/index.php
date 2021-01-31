@@ -5,12 +5,12 @@
    */
   $botCodePath = __DIR__ . '/../';
 
-  require $botCodePath . '/TempestAPIFunctions.php';
-  require $botCodePath . '/UtilityFunctions.php';
-  require $botCodePath . '/SlackPost.php';
-  require $botCodePath . '/SlackResponseBlocks.php';
   require $botCodePath . '/config/bot.php';
   include $botCodePath . '/config/tempest.php';
+  require $botCodePath . '/SlackPost.php';
+  require $botCodePath . '/SlackResponseBlocks.php';
+  require $botCodePath . '/TempestAPIFunctions.php';
+  require $botCodePath . '/TempestObservation.php';
 
   // The `array_key_exists` function only exists in PHP 7.3.0 or above; create a fallback for < 7.3.0
   if (! function_exists("array_key_last")) {
@@ -99,21 +99,12 @@
 
         getLastStationObservation();
         $lastObservation = include $botCodePath . '/config/lastObservation.generated.php';
-        $obsData = $lastObservation['obs'][0];
-
-        $modifiedObs = array(
-          'timestamp' => date('g:i a', $obsData['timestamp']),
-          'temperature' => convertCToF($obsData['air_temperature']) . $tempUnitLabel,
-          'pressure' => convertMbToInHg($obsData['sea_level_pressure']) . "$pressureUnitLabel",
-          'feelsLike' => convertCToF($obsData['feels_like']) . $tempUnitLabel,
-          'windAvg' => convertMPSToMPH($obsData['wind_avg']) . " $windUnitLabel",
-          'windDir' => convertDegreesToWindDirection($obsData['wind_direction'])
-        );
+        $observation = new TempestObservation('current', $lastObservation['obs'][0]);
 
         // Create basic text response (fallback)
-        $responseText = "At $modifiedObs[timestamp], the temperature was $modifiedObs[temperature] (feels like $modifiedObs[feelsLike]) with a $modifiedObs[windDir] wind at $modifiedObs[windAvg].";
+        $responseText = "At $observation->f_timestamp, the temperature was $observation->f_temperature (feels like $observation->f_feelsLike) with a $observation->f_windDir wind at $observation->f_windAvg.";
         // Use blocks for prettier response
-        $slackbot_details['blocks'] = getCurrentObservationBlocks($modifiedObs);
+        $slackbot_details['blocks'] = getCurrentObservationBlocks($observation);
 
         $result = SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
         if ($debug_bot) {
@@ -196,44 +187,12 @@
           $slackbot_details['icon_emoji'] = ':book:';
 
           getStationObservationsByRange($startRange, $endRange);
-          $observationData = json_decode(file_get_contents($tempestStationHistoryPath . 'stationHistory.generated.json'), true)['obs'];
-          $totalObs = count($observationData);
-          $lastObsID = count($observationData)-1;
-          $timeDiff = $observationData[$lastObsID][0] - $observationData[0][0];
-          $highWindID = getParentKey(max(array_column($observationData, 3)), $observationData, 3);
-          $strikeCount = array_sum(array_column($observationData, 15));
-          $closeStrike = (0 == $strikeCount) ? 0 : min(array_filter(array_column($observationData, 14)));
-          $closeStrikeID = (0 == $strikeCount) ? '' : getParentKey($closeStrike, $observationData, 14);
-
-          $summaryData = array(
-            'historyDateStart' => ($timeDiff < 86400) ? date('l, F j, g:i a', $observationData[0][0]) : date('l, F j', $observationData[0][0]),
-            'historyDateEnd' => ($timeDiff < 86400) ? date('l, F j, g:i a', $observationData[$lastObsID][0]) : date('l, F j', $observationData[$lastObsID][0]),
-            'highTemp' => convertCToF(max(array_column($observationData, 7))) . $tempUnitLabel,
-            'lowTemp' => convertCToF(min(array_column($observationData, 7))) . $tempUnitLabel,
-            'avgTemp' => convertCToF(array_sum(array_column($observationData, 7))/$totalObs) . $tempUnitLabel,
-            'highUV' => max(array_column($observationData, 10)),
-            'highSolarRad' => number_format(max(array_column($observationData, 11)), 0, '.', ',') . ' ' . $solarRadLabel,
-            'highLux' => number_format(max(array_column($observationData, 9)), 0, '.', ','). ' lux',
-            'highWindGust' => convertMPSToMPH(max(array_column($observationData, 3))) . ' ' . $windUnitLabel,
-            'highWindTimestamp' => date("F j", $observationData[$highWindID][0]) . ' at ' . date("g:i a", $observationData[$highWindID][0]),
-            'highWindDir' => convertDegreesToWindDirection($observationData[$highWindID][4]),
-            'windAvg' => convertMPSToMPH(array_sum(array_column($observationData, 2))/$totalObs) . ' ' . $windUnitLabel,
-            'strikeCount' => number_format($strikeCount, 0, '.', ',')
-          );
-          if ($strikeCount > 0) {
-            $summaryData['closeStrike'] = $closeStrike;
-            $summaryData['closeStrikeTimestamp'] = date("F j", $observationData[$closeStrikeID][0]) . ' at ' . date("g:i a", $observationData[$closeStrikeID][0]);
-            $summaryData['closestStrike'] = convertKmToMiles($closeStrike) . ' ' . $distanceUnitLabel;
-          } else {
-            $summaryData['closeStrike'] = '';
-            $summaryData['closeStrikeTimestamp'] = '';
-            $summaryData['closestStrike'] = '';
-          }
+          $observations = new TempestObservation('history', json_decode(file_get_contents($tempestStationHistoryPath . 'stationHistory.generated.json'), true)['obs']);
           
           // Create basic text response (fallback)
-          $responseText = "During the period of $summaryData[historyDateStart] to $summaryData[historyDateEnd], the high temperature was $summaryData[highTemp] with a low of $summaryData[lowTemp]. The average temperature for the period was $summaryData[avgTemp]. A high wind gust of $summaryData[highWindGust] was observed on $summaryData[highWindTimestamp].";
+          $responseText = "During the period of $observations->historyDateStart to $observations->historyDateEnd, the high temperature was $observations->f_highTemp with a low of $observations->f_lowTemp. The average temperature for the period was $observations->f_avgTemp. A high wind gust of $observations->highWindGust was observed $observations->long_highWindTimestamp.";
           // Use blocks for prettier response
-          $slackbot_details['blocks'] = getMultiDayHistoryBlocks($summaryData);
+          $slackbot_details['blocks'] = getMultiDayHistoryBlocks($observations);
 
           $result = SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
           if ($debug_bot) {
@@ -262,47 +221,12 @@
             // Pull the requested day's data if it doesn't exist.
             getStationObservationsByDay(date('Y-m-d', strtotime($commandArgs)));
           }
-          $observationData = json_decode(file_get_contents($fileToGrab), true)['obs'];
-          $totalObs = count($observationData);
-          $lastObsID = count($observationData)-1;
-          $pressDiff = $observationData[0][6] - $observationData[$lastObsID][6];
-          $highWindID = getParentKey(max(array_column($observationData, 3)), $observationData, 3);
-          $strikeCount = array_sum(array_column($observationData, 15));
-          $closeStrike = (0 == $strikeCount) ? 0 : min(array_filter(array_column($observationData, 14)));
-          $closeStrikeID = (0 == $strikeCount) ? '' : getParentKey($closeStrike, $observationData, 14);
-          
-          $summaryData = array(
-            'historyDate' => date('l, F j', $observationData[0][0]),
-            'highTemp' => convertCToF(max(array_column($observationData, 7))) . $tempUnitLabel,
-            'lowTemp' => convertCToF(min(array_column($observationData, 7))) . $tempUnitLabel,
-            'avgTemp' => convertCToF(array_sum(array_column($observationData, 7))/$totalObs) . $tempUnitLabel,
-            'highPress' => convertMbToInHg(max(array_column($observationData, 6))) . $pressureUnitLabel,
-            'lowPress' => convertMbToInHg(min_mod(array_column($observationData, 6))) . $pressureUnitLabel,
-            'pressTrend' => ($pressDiff >= 1) ? "Falling" : "Rising",
-            'highUV' => max(array_column($observationData, 10)),
-            'highSolarRad' => number_format(max(array_column($observationData, 11)), 0, '.', ',') . ' ' . $solarRadLabel,
-            'highLux' => number_format(max(array_column($observationData, 9)), 0, '.', ','). ' lux',
-            'highWindGust' => convertMPSToMPH(max(array_column($observationData, 3))) . ' ' . $windUnitLabel,
-            'highWindTimestamp' => date("g:i a", $observationData[$highWindID][0]),
-            'highWindDir' => convertDegreesToWindDirection($observationData[$highWindID][4]),
-            'windAvg' => convertMPSToMPH(array_sum(array_column($observationData, 2))/$totalObs) . ' ' . $windUnitLabel,
-            'dailyPrecip' => convertMmToInch($observationData[$lastObsID][20]) . $precipUnitLabel,
-            'strikeCount' => number_format($strikeCount, 0, '.', ',')
-          );
-          if ($strikeCount > 0) {
-            $summaryData['closeStrike'] = $closeStrike;
-            $summaryData['closeStrikeTimestamp'] = date("g:i a", $observationData[$closeStrikeID][0]);
-            $summaryData['closestStrike'] = convertKmToMiles($closeStrike) . ' ' . $distanceUnitLabel;
-          } else {
-            $summaryData['closeStrike'] = '';
-            $summaryData['closeStrikeTimestamp'] = '';
-            $summaryData['closestStrike'] = '';
-          }
+          $observation = new TempestObservation('history', json_decode(file_get_contents($fileToGrab), true)['obs']);
           
           // Create basic text response (fallback)
-          $responseText = "On $summaryData[historyDate], the high temperature was $summaryData[highTemp] with a low of $summaryData[lowTemp]. The average temperature for the day was $summaryData[avgTemp]. A high wind gust of $summaryData[highWindGust] was observed at $summaryData[highWindTimestamp].";
+          $responseText = "On $observation->historyDateStart, the high temperature was $observation->f_highTemp with a low of $observation->f_lowTemp. The average temperature for the day was $observation->f_avgTemp. A high wind gust of $observation->f_highWindGust was observed $observation->highWindTimestamp.";
           // Use blocks for prettier response
-          $slackbot_details['blocks'] = getDayHistoryBlocks($summaryData);
+          $slackbot_details['blocks'] = getDayHistoryBlocks($observation);
 
           $result = SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
           if ($debug_bot) {
@@ -374,29 +298,18 @@
           // Do we match a "day" string? (preferred forecast)
           if (count($dayMatches) > 0) {
             $dayForecasts = array();
-            $day = 0;
+            $day = 1;
             while  ($day <= $dayMatches[0]) {
-              $obsData = $dailyData[$day];
-
-              $dayForecasts[] = array(
-                'timestamp' => date('l, F j', $obsData['day_start_local']),
-                'icon' => $obsData['icon'],
-                'high_temperature' => $obsData['air_temp_high'] . $tempUnitLabel,
-                'low_temperature' => $obsData['air_temp_low'] . $tempUnitLabel,
-                'precip_type' => (isset($obsData['precip_type'])) ? $obsData['precip_type'] : '',
-                'precip_probability' => $obsData['precip_probability'] . "%",
-                'conditions' => $obsData['conditions'],
-                'sunrise' => date('g:i a', $obsData['sunrise']),
-                'sunset' => date('g:i a', $obsData['sunset'])
-              );
-
+              $dayForecasts[] = new TempestObservation('day_forecast', $dailyData[$day]);
               $day++;
             }
 
             // Create basic text response (fallback) -- just the _last_ forecast match
-            $responseText = "The forecast for " . $dayForecasts[$dayMatches[0]]['timestamp'] . ": " . $dayForecasts[$dayMatches[0]]['conditions'] . " with a high of " . $dayForecasts[$dayMatches[0]]['high_temperature'] . " (low: " . $dayForecasts[$dayMatches[0]]['low_temperature'] . ").";
-            if ($dayForecasts[$dayMatches[0]]['precip_probability']> 0) { $responseText .= " There's a " . $dayForecasts[$dayMatches[0]]['precip_probability'] . " chance of " . $dayForecasts[$dayMatches[0]]['precip_type'] . "."; }
-            $responseText .= " Sunrise: " . $dayForecasts[$dayMatches[0]]['sunrise'] . " | Sunset: " . $dayForecasts[$dayMatches[0]]['sunset'];
+            // Get the last ID since we dynamically adjust to keep ourselves under the block limit
+            $lastForecast = array_key_last($dayForecasts);
+            $responseText = "The forecast for " . $dayForecasts[$lastForecast]->f_timestamp . ": " . $dayForecasts[$lastForecast]->conditions . " with a high of " . $dayForecasts[$lastForecast]->f_high_temperature . " (low: " . $dayForecasts[$lastForecast]->f_low_temperature . ").";
+            if ($dayForecasts[$lastForecast]->precip_probability > 0) { $responseText .= " There's a " . $dayForecasts[$lastForecast]->f_precip_probability . " chance of " . $dayForecasts[$lastForecast]->f_precip_type . "."; }
+            $responseText .= " Sunrise: " . $dayForecasts[$lastForecast]->f_sunrise . " | Sunset: " . $dayForecasts[$lastForecast]->f_sunset;
 
             // Use blocks for prettier and complete response
             $slackbot_details['blocks'] = getForecastDayRangeBlocks($dayForecasts);
@@ -414,30 +327,16 @@
             $hourForecasts = array();
             $hour = 0;
             while  ($hour <= $hourMatches[0]) {
-              $obsData = $hourlyData[$hour];
-
-              $hourForecasts[] = array(
-                'timestamp' => ($hoursToForecast > 8) ? date('l, F j, g:i a', $obsData['time']) : date('g:i a', $obsData['time']),
-                'icon' => $obsData['icon'],
-                'temperature' => $obsData['air_temperature'] . $tempUnitLabel,
-                'pressure' => $obsData['sea_level_pressure'] . $pressureUnitLabel,
-                'precip_type' => (isset($obsData['precip_type'])) ? $obsData['precip_type'] : '',
-                'precip_probability' => $obsData['precip_probability'] . "%",
-                'conditions' => $obsData['conditions'],
-                'feelsLike' => $obsData['feels_like'] . $tempUnitLabel,
-                'windAvg' => $obsData['wind_avg'] . " $windUnitLabel",
-                'windDir' => $obsData['wind_direction_cardinal']
-              );
-
+              $hourForecasts[] = new TempestObservation('hour_forecast', $hourlyData[$hour]);
               $hour += $useEveryXHour;
             }
 
             // Create basic text response (fallback) -- just the _last_ forecast match
             // Get the last ID since we dynamically adjust to keep ourselves under the block limit
             $lastForecast = array_key_last($hourForecasts);
-            $responseText = "The forecast for " . $hourForecasts[$lastForecast]['timestamp'] . ": " . $hourForecasts[$lastForecast]['temperature'] . " (feels like " . $hourForecasts[$lastForecast]['feelsLike'] . ")";
-            if ($hourForecasts[$lastForecast]['precip_probability']> 0) { $responseText .= " with a " . $hourForecasts[$lastForecast]['precip_probability'] . " chance of " . $hourForecasts[$lastForecast]['precip_type'] . ". "; }
-            $responseText .= $hourForecasts[$lastForecast]['windDir'] . " winds averaging " . $hourForecasts[$lastForecast]['windAvg'] . ".";
+            $responseText = "The forecast for " . $hourForecasts[$lastForecast]->f_timestamp . ": " . $hourForecasts[$lastForecast]->f_temperature . " (feels like " . $hourForecasts[$lastForecast]->f_feelsLike . ")";
+            if ($hourForecasts[$lastForecast]->precip_probability > 0) { $responseText .= " with a " . $hourForecasts[$lastForecast]->f_precip_probability . " chance of " . $hourForecasts[$lastForecast]->f_precip_type . ". "; }
+            $responseText .= $hourForecasts[$lastForecast]->f_windDir . " winds averaging " . $hourForecasts[$lastForecast]->f_windAvg . ".";
 
             // Use blocks for prettier response
             $slackbot_details['blocks'] = getForecastHourRangeBlocks($hourForecasts);
@@ -509,27 +408,16 @@
 
           // Do we match a "day" string? (preferred forecast)
           if (count($dayMatches) > 0) {
-            $obsData = $dailyData[$dayMatches[0]];
+            $observation = new TempestObservation('day_forecast', $dailyData[$dayMatches[0]]);
 
-            $modifiedObs = array(
-              'timestamp' => date('l, F j', $obsData['day_start_local']),
-              'high_temperature' => $obsData['air_temp_high'] . $tempUnitLabel,
-              'low_temperature' => $obsData['air_temp_low'] . $tempUnitLabel,
-              'precip_type' => (isset($obsData['precip_type'])) ? $obsData['precip_type'] : '',
-              'precip_probability' => $obsData['precip_probability'] . "%",
-              'conditions' => $obsData['conditions'],
-              'sunrise' => date('g:i a', $obsData['sunrise']),
-              'sunset' => date('g:i a', $obsData['sunset'])
-            );
-
-            $slackbot_details['icon_emoji'] = $slackConditionIcons[$obsData['icon']];
+            $slackbot_details['icon_emoji'] = $slackConditionIcons[$observation->icon];
             // Create basic text response (fallback)
-            $responseText = "The forecast for $modifiedObs[timestamp]: $modifiedObs[conditions] with a high of $modifiedObs[high_temperature] (low: $modifiedObs[low_temperature]).";
-            if ($modifiedObs['precip_probability']> 0) { $responseText .= " There's a $modifiedObs[precip_probability] chance of $modifiedObs[precip_type]."; }
-            $responseText .= " Sunrise: $modifiedObs[sunrise] | Sunset: $modifiedObs[sunset].";
+            $responseText = "The forecast for $observation->f_timestamp: $observation->conditions with a high of $observation->f_high_temperature (low: $observation->f_low_temperature).";
+            if ($observation->precip_probability> 0) { $responseText .= " There's a $observation->f_precip_probability chance of $observation->f_precip_type."; }
+            $responseText .= " Sunrise: $observation->sunrise | Sunset: $observation->sunset.";
 
             // Use blocks for prettier response
-            $slackbot_details['blocks'] = getDayForecastBlocks($modifiedObs);
+            $slackbot_details['blocks'] = getDayForecastBlocks($observation);
             
             $result = SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
             if ($debug_bot) {
@@ -538,28 +426,16 @@
             }
           // Do we match an "hourly" string?
           } else if (count($hourMatches) > 0) {
-            $obsData = $hourlyData[$hourMatches[0]];
+            $observation = new TempestObservation('hour_forecast', $hourlyData[$hourMatches[0]]);
 
-            $modifiedObs = array(
-              'timestamp' => ($hoursToForecast > 8) ? date('l, F j, g:i a', $obsData['time']) : date('g:i a', $obsData['time']),
-              'temperature' => $obsData['air_temperature'] . $tempUnitLabel,
-              'pressure' => $obsData['sea_level_pressure'] . $pressureUnitLabel,
-              'precip_type' => (isset($obsData['precip_type'])) ? $obsData['precip_type'] : '',
-              'precip_probability' => $obsData['precip_probability'] . "%",
-              'conditions' => $obsData['conditions'],
-              'feelsLike' => $obsData['feels_like'] . $tempUnitLabel,
-              'windAvg' => $obsData['wind_avg'] . " $windUnitLabel",
-              'windDir' => $obsData['wind_direction_cardinal']
-            );
-
-            $slackbot_details['icon_emoji'] = $slackConditionIcons[$obsData['icon']];
+            $slackbot_details['icon_emoji'] = $slackConditionIcons[$observation->icon];
             // Create basic text response (fallback)
-            $responseText = "The forecast for $modifiedObs[timestamp]: $modifiedObs[temperature] (feels like $modifiedObs[feelsLike])";
-            if ($modifiedObs['precip_probability']> 0) { $responseText .= " with a $modifiedObs[precip_probability] chance of $modifiedObs[precip_type]"; }
-            $responseText .= ". $modifiedObs[windDir] winds averaging $modifiedObs[windAvg].";
+            $responseText = "The forecast for $observation->f_timestamp: $observation->f_temperature (feels like $observation->f_feelsLike)";
+            if ($observation->precip_probability > 0) { $responseText .= " with a $observation->f_precip_probability chance of $observation->f_precip_type"; }
+            $responseText .= ". $observation->f_windDir winds averaging $observation->f_windAvg.";
 
             // Use blocks for prettier response
-            $slackbot_details['blocks'] = getHourForecastBlocks($modifiedObs);
+            $slackbot_details['blocks'] = getHourForecastBlocks($observation);
 
             $result = SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
             if ($debug_bot) {

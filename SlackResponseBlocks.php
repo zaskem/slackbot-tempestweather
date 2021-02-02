@@ -136,7 +136,8 @@
   function getHourForecastBlocks($observation, $args = null) {
     global $helpContextBlock, $dividerBlock;
 
-    $blocks = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Forecast for ' . $observation->f_timestamp,'emoji'=>true))];
+    $endTimestamp = (($observation->time - time()) < 82800) ? $observation->f_timestamp : $observation->f_long_timestamp;
+    $blocks = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Forecast for ' . $endTimestamp,'emoji'=>true))];
     array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$observation->conditions . ', ' . $observation->f_temperature . ' (feels like ' . $observation->f_feelsLike . ')')));
     if ($observation->precip_probability > 0) {
       array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'There is a ' . $observation->f_precip_probability . ' chance of ' . $observation->f_precip_type . '.')));

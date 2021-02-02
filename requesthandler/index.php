@@ -190,7 +190,7 @@
           $observations = new TempestObservation('history', json_decode(file_get_contents($tempestStationHistoryPath . 'stationHistory.generated.json'), true)['obs']);
           
           // Create basic text response (fallback)
-          $responseText = "During the period of $observations->historyDateStart to $observations->historyDateEnd, the high temperature was $observations->f_highTemp with a low of $observations->f_lowTemp. The average temperature for the period was $observations->f_avgTemp. A high wind gust of $observations->highWindGust was observed $observations->long_highWindTimestamp.";
+          $responseText = "During the period of $observations->f_historyDateStart to $observations->f_historyDateEnd, the high temperature was $observations->f_highTemp with a low of $observations->f_lowTemp. The average temperature for the period was $observations->f_avgTemp. A high wind gust of $observations->f_highWindGust was observed $observations->f_highWindTimestamp.";
           // Use blocks for prettier response
           $slackbot_details['blocks'] = getMultiDayHistoryBlocks($observations);
 
@@ -224,7 +224,7 @@
           $observation = new TempestObservation('history', json_decode(file_get_contents($fileToGrab), true)['obs']);
           
           // Create basic text response (fallback)
-          $responseText = "On $observation->historyDateStart, the high temperature was $observation->f_highTemp with a low of $observation->f_lowTemp. The average temperature for the day was $observation->f_avgTemp. A high wind gust of $observation->f_highWindGust was observed $observation->highWindTimestamp.";
+          $responseText = "On $observation->f_historyDateStart, the high temperature was $observation->f_highTemp with a low of $observation->f_lowTemp. The average temperature for the day was $observation->f_avgTemp. A high wind gust of $observation->f_highWindGust was observed $observation->f_highWindTimestamp.";
           // Use blocks for prettier response
           $slackbot_details['blocks'] = getDayHistoryBlocks($observation);
 
@@ -414,7 +414,7 @@
             // Create basic text response (fallback)
             $responseText = "The forecast for $observation->f_timestamp: $observation->conditions with a high of $observation->f_high_temperature (low: $observation->f_low_temperature).";
             if ($observation->precip_probability> 0) { $responseText .= " There's a $observation->f_precip_probability chance of $observation->f_precip_type."; }
-            $responseText .= " Sunrise: $observation->sunrise | Sunset: $observation->sunset.";
+            $responseText .= " Sunrise: $observation->f_sunrise | Sunset: $observation->f_sunset.";
 
             // Use blocks for prettier response
             $slackbot_details['blocks'] = getDayForecastBlocks($observation);

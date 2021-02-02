@@ -68,10 +68,16 @@ class TempestObservation {
   private function formatCurrentObservationStrings() {
     $this->f_timestamp = date('g:i a', $this->timestamp);
     $this->f_temperature = $this->convertCToF($this->air_temperature) . $this->tempUnitLabel;
-    $this->f_pressure = $this->convertMbToInHg($this->sea_level_pressure) . "$this->pressureUnitLabel";
+    $this->f_dew_point = $this->convertCToF($this->dew_point) . " $this->tempUnitLabel";
     $this->f_feelsLike = $this->convertCToF($this->feels_like) . $this->tempUnitLabel;
+    $this->f_relative_humidity = $this->relative_humidity . "%";
+    $this->f_pressure = $this->convertMbToInHg($this->station_pressure) . "$this->pressureUnitLabel";
     $this->f_windAvg = $this->convertMPSToMPH($this->wind_avg) . " $this->windUnitLabel";
     $this->f_windDir = $this->convertDegreesToWindDirection($this->wind_direction);
+    $this->f_windGust = $this->convertMPSToMPH($this->wind_gust) . " $this->windUnitLabel";
+    $this->f_windLull = $this->convertMPSToMPH($this->wind_lull) . " $this->windUnitLabel";
+    $this->f_solar_radiation = number_format($this->solar_radiation, 0, '.', ',') . ' ' . $this->solarRadLabel;
+    $this->f_brightness = number_format($this->brightness, 0, '.', ','). ' lx';
   }
 
   private function formatDayForecastObservationStrings() {
@@ -86,62 +92,125 @@ class TempestObservation {
   }
 
   private function formatHourForecastObservationStrings() {
-    $this->long_timestamp = date('l, F j, g:i a', $this->time);
+    $stationMetadata = include __DIR__ . '/config/stationMetadata.generated.php';
+    $stationElevation = $stationMetadata['station_meta']['elevation'];
+    $this->f_long_timestamp = date('l, F j, g:i a', $this->time);
     $this->f_timestamp = date('g:i a', $this->time);
     $this->f_temperature = $this->air_temperature . $this->tempUnitLabel;
-    $this->f_pressure = $this->sea_level_pressure . $this->pressureUnitLabel;
+    $this->f_feelsLike = $this->feels_like . $this->tempUnitLabel;
+    $this->f_relative_humidity = $this->relative_humidity . "%";
+    // Pressure calculation from sea level to station's local elevation derived from https://www.weather.gov/media/epz/wxcalc/stationPressure.pdf
+    $this->f_pressure = ($this->sea_level_pressure * (((288 - (0.0065 * $stationElevation)) / 288) ** 5.2561)) . $this->pressureUnitLabel;
     $this->f_precip_type = (isset($this->precip_type)) ? $this->precip_type : '';
     $this->f_precip_probability = $this->precip_probability . "%";
-    $this->f_feelsLike = $this->feels_like . $this->tempUnitLabel;
     $this->f_windAvg = $this->wind_avg . " $this->windUnitLabel";
     $this->f_windDir = $this->wind_direction_cardinal;
+    $this->f_windGust = $this->wind_gust . " $this->windUnitLabel";
   }
 
   private function summarizeHistoryData($data) {
-    // ASSIGN SUMMARIZED PROPERTIES
+    // CREATE CALCULATED VALUES
     $this->totalObs = count($data);
     $this->lastObsID = count($data)-1;
     $this->timeDiff = $data[$this->lastObsID][0] - $data[0][0];
     $this->pressDiff = $data[0][6] - $data[$this->lastObsID][6];
-    $this->highWindID = $this->getParentKey(max(array_column($data, 3)), $data, 3);
-    $this->strikeCount = array_sum(array_column($data, 15));
-    $this->closeStrike = (0 == $this->strikeCount) ? 0 : min(array_filter(array_column($data, 14)));
-    $this->closeStrikeID = (0 == $this->strikeCount) ? '' : $this->getParentKey($this->closeStrike, $data, 14);
-    $this->highTemp = max(array_column($data, 7));
-    $this->lowTemp = min(array_column($data, 7));
-    $this->avgTemp = array_sum(array_column($data, 7)) / $this->totalObs;
-    $this->highPress = max(array_column($data, 6));
-    $this->lowPress = $this->min_mod(array_column($data, 6));
-    $this->pressTrend = ($this->pressDiff >= 1) ? "Falling" : "Rising";
-    $this->highUV = max(array_column($data, 10));
-    $this->highSolarRad = max(array_column($data, 11));
-    $this->highLux = max(array_column($data, 9));
-    $this->highWindGust = max(array_column($data, 3));
-    $this->windAvg = array_sum(array_column($data, 2)) / $this->totalObs;
+    
+    // TIME & TIMESTAMPS
+    $this->f_historyDateStart = ($this->timeDiff < 86400) ? date('l, F j, g:i a', $data[0][0]) : date('l, F j', $data[0][0]);
+    $this->f_historyDateEnd = ($this->timeDiff < 86400) ? date('l, F j, g:i a', $data[$this->lastObsID][0]) : date('l, F j', $data[$this->lastObsID][0]);
 
-    // NOW HANDLE THE FORMATTING BITS
-    //$this->historyDateStart = ($this->timeDiff < 86400) ? date('l, F j, g:i a', $data[0][0]) : date('l, F j', $data[0][0]);
-    $this->historyDateStart = date('l, F j', $data[0][0]);
-//    $this->historyDateEnd = ($this->timeDiff < 86400) ? date('l, F j, g:i a', $data[$this->lastObsID][0]) : date('l, F j', $data[$lastObsID][0]);
-    $this->historyDateEnd = date('l, F j', $data[$this->lastObsID][0]);
-    $this->long_historyDateStart = date('l, F j, g:i a', $data[0][0]);
-    $this->long_historyDateEnd = date('l, F j, g:i a', $data[$this->lastObsID][0]);
+    // WIND
+    // Reference values
+    $this->highWindID = $this->getParentKey(max(array_column($data, 3)), $data, 3);
+    $this->highWindGust = $data[$this->highWindID][3];
+    $this->windAvg = array_sum(array_column($data, 2)) / $this->totalObs;
+    // Formatted values
+    $this->f_highWindTimestamp = ($this->timeDiff < 86400) ? ' at ' . date("g:i a", $data[$this->highWindID][0]) : ' on ' . date("F j", $data[$this->highWindID][0]) . ' at ' . date("g:i a", $data[$this->highWindID][0]);
+    $this->f_highWindGust = $this->convertMPSToMPH($this->highWindGust) . ' ' . $this->windUnitLabel;
+    $this->f_highWindDir = $this->convertDegreesToWindDirection($data[$this->highWindID][4]);
+    $this->f_windAvg = $this->convertMPSToMPH($this->windAvg) . ' ' . $this->windUnitLabel;
+
+    // PRESSURE
+    // Reference values
+    $this->highPressID = $this->getParentKey(max(array_column($data, 6)), $data, 6);
+    $this->lowPressID = $this->getParentKey($this->min_mod(array_column($data, 6)), $data, 6);
+    $this->highPress = $data[$this->highPressID][6];
+    $this->lowPress = $data[$this->lowPressID][6];
+    // Formatted values
+    $this->f_highPressTimestamp = ($this->timeDiff < 86400) ? ' at ' . date("g:i a", $data[$this->highPressID][0]) : ' on ' . date("F j", $data[$this->highPressID][0]) . ' at ' . date("g:i a", $data[$this->highPressID][0]);
+    $this->f_lowPressTimestamp = ($this->timeDiff < 86400) ? ' at ' . date("g:i a", $data[$this->lowPressID][0]) : ' on ' . date("F j", $data[$this->lowPressID][0]) . ' at ' . date("g:i a", $data[$this->lowPressID][0]);
+    $this->f_highPress = $this->convertMbToInHg($this->highPress) . $this->pressureUnitLabel;
+    $this->f_lowPress = $this->convertMbToInHg($this->lowPress) . $this->pressureUnitLabel;
+    if ($this->pressDiff >= 1) {
+      $this->f_pressTrend = "Falling";
+    } else if ($this->pressDiff <= -1) {
+      $this->f_pressTrend = "Rising";
+    } else {
+      $this->f_pressTrend = "Steady";
+    }
+
+    // TEMPERATURE & RH
+    // Reference values
+    $this->highTempID = $this->getParentKey(max(array_column($data, 7)), $data, 7);
+    $this->lowTempID = $this->getParentKey(min(array_column($data, 7)), $data, 7);
+    $this->highTemp = $data[$this->highTempID][7];
+    $this->lowTemp = $data[$this->lowTempID][7];
+    $this->avgTemp = array_sum(array_column($data, 7)) / $this->totalObs;
+    // Formatted values
+    $this->f_highTempTimestamp = ($this->timeDiff < 86400) ? ' at ' . date("g:i a", $data[$this->highTempID][0]) : ' on ' . date("F j", $data[$this->highTempID][0]) . ' at ' . date("g:i a", $data[$this->highTempID][0]);
+    $this->f_lowTempTimestamp = ($this->timeDiff < 86400) ? ' at ' . date("g:i a", $data[$this->lowTempID][0]) : ' on ' . date("F j", $data[$this->lowTempID][0]) . ' at ' . date("g:i a", $data[$this->lowTempID][0]);
     $this->f_highTemp = $this->convertCToF($this->highTemp) . $this->tempUnitLabel;
     $this->f_lowTemp = $this->convertCToF($this->lowTemp) . $this->tempUnitLabel;
     $this->f_avgTemp = $this->convertCToF($this->avgTemp) . $this->tempUnitLabel;
-    $this->f_highPress = $this->convertMbToInHg($this->highPress) . $this->pressureUnitLabel;
-    $this->f_lowPress = $this->convertMbToInHg($this->lowPress) . $this->pressureUnitLabel;
+
+    // RELATIVE HUMIDITY
+    // Reference values
+    $this->highRHID = $this->getParentKey(max(array_column($data, 8)), $data, 8);
+    $this->lowRHID = $this->getParentKey(min(array_column($data, 8)), $data, 8);
+    $this->highRH = $data[$this->highRHID][8];
+    $this->lowRH = $data[$this->lowRHID][8];
+    $this->avgRH = array_sum(array_column($data, 8)) / $this->totalObs;
+    // Formatted values
+    $this->f_highRHTimestamp = ($this->timeDiff < 86400) ? ' at ' . date("g:i a", $data[$this->highRHID][0]) : ' on ' . date("F j", $data[$this->highRHID][0]) . ' at ' . date("g:i a", $data[$this->highRHID][0]);
+    $this->f_lowRHTimestamp = ($this->timeDiff < 86400) ? ' at ' . date("g:i a", $data[$this->lowRHID][0]): ' on ' . date("F j", $data[$this->lowRHID][0]) . ' at ' . date("g:i a", $data[$this->lowRHID][0]);
+    $this->f_highRH = $this->convertCToF($this->highRH) . "%";
+    $this->f_lowRH = $this->convertCToF($this->lowRH) . "%";
+    $this->f_avgRH = $this->convertCToF($this->avgRH) . "%";
+
+    // SUNLIGHT & BRIGHTNESS
+    // Reference values
+    $this->highUVID = $this->getParentKey(max(array_column($data, 10)), $data, 10);
+    $this->highSolarRadID = $this->getParentKey(max(array_column($data, 11)), $data, 11);
+    $this->highLuxID = $this->getParentKey(max(array_column($data, 9)), $data, 9);
+    $this->highUV = $data[$this->highUVID][10];
+    $this->highSolarRad = $data[$this->highSolarRadID][11];
+    $this->highLux = $data[$this->highLuxID][9];
+    // Formatted values
+    $this->f_highUVTimestamp = ($this->timeDiff < 86400) ? ' at ' . date("g:i a", $data[$this->highUVID][0]) : ' on ' . date("F j", $data[$this->highUVID][0]) . ' at ' . date("g:i a", $data[$this->highUVID][0]);
     $this->f_highSolarRad = number_format($this->highSolarRad, 0, '.', ',') . ' ' . $this->solarRadLabel;
+    $this->f_highSolarRadTimestamp = ($this->timeDiff < 86400) ? ' at ' . date("g:i a", $data[$this->highSolarRadID][0]) : ' on ' . date("F j", $data[$this->highSolarRadID][0]) . ' at ' . date("g:i a", $data[$this->highSolarRadID][0]);
     $this->f_highLux = number_format($this->highLux, 0, '.', ','). ' lx';
-    $this->f_highWindGust = $this->convertMPSToMPH($this->highWindGust) . ' ' . $this->windUnitLabel;
-    $this->highWindTimestamp = ' at ' . date("g:i a", $data[$this->highWindID][0]);
-    $this->long_highWindTimestamp = ' on ' . date("F j", $data[$this->highWindID][0]) . ' at ' . date("g:i a", $data[$this->highWindID][0]);
-    $this->highWindDir = $this->convertDegreesToWindDirection($data[$this->highWindID][4]);
-    $this->f_windAvg = $this->convertMPSToMPH($this->windAvg) . ' ' . $this->windUnitLabel;
-    $this->f_dailyPrecip = $this->convertMmToInch($data[$this->lastObsID][20]) . $this->precipUnitLabel;
+    $this->f_highLuxTimestamp = ($this->timeDiff < 86400) ? ' at ' . date("g:i a", $data[$this->highLuxID][0]) : ' on ' . date("F j", $data[$this->highLuxID][0]) . ' at ' . date("g:i a", $data[$this->highLuxID][0]);
+
+    // LIGHTNING
+    // Reference values
+    $this->strikeCount = array_sum(array_column($data, 15));
+    $this->closeStrike = (0 == $this->strikeCount) ? 0 : min(array_filter(array_column($data, 14)));
+    $this->closeStrikeID = (0 == $this->strikeCount) ? '' : $this->getParentKey($this->closeStrike, $data, 14);
+    // Formatted values
     $this->f_strikeCount = number_format($this->strikeCount, 0, '.', ',');
-    $this->closeStrikeTimestamp = (0 == $this->strikeCount) ? '' : date("F j", $data[$this->closeStrikeID][0]) . ' at ' . date("g:i a", $data[$this->closeStrikeID][0]);
+    if ($this->timeDiff < 86400) {
+      $this->f_closeStrikeTimestamp = (0 == $this->strikeCount) ? '' : ' at ' . date("g:i a", $data[$this->closeStrikeID][0]);
+    } else {
+      $this->f_closeStrikeTimestamp = (0 == $this->strikeCount) ? '' : ' on ' . date("F j", $data[$this->closeStrikeID][0]) . ' at ' . date("g:i a", $data[$this->closeStrikeID][0]);
+    }
     $this->f_closestStrike = (0 == $this->strikeCount) ? '' : $this->convertKmToMiles($this->closeStrike) . ' ' . $this->distanceUnitLabel;
+
+    // PRECIPITATION
+    // Reference values
+    $this->dailyPrecip = $data[$this->lastObsID][20];
+    // Formatted values
+    $this->f_dailyPrecip = $this->convertMmToInch($this->dailyPrecip) . $this->precipUnitLabel;
   }
 
 

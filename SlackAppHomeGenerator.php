@@ -28,7 +28,8 @@
     $observation = new TempestObservation('current', $lastObservation['obs'][0]);
 
     array_push($blks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Currently (' . $observation->f_timestamp . '):*')));
-    array_push($blks, array('type'=>'section','fields'=>array(['type'=>'mrkdwn','text'=>':thermometer: ' . $observation->f_temperature . ' (feels like ' . $observation->f_feelsLike . ')'], ['type'=>'mrkdwn','text'=>':dash: Wind ' . $observation->f_windDir . ' ' . $observation->f_windAvg])), $dividerBlock, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Next four hours:*')));
+    array_push($blks, array('type'=>'section','fields'=>array(['type'=>'mrkdwn','text'=>':thermometer: ' . $observation->f_temperature . ' (feels like ' . $observation->f_feelsLike . ')
+        dew point ' . $observation->f_dew_point . ' (humidity ' . $observation->f_relative_humidity . ')'], ['type'=>'mrkdwn','text'=>':dash: Wind ' . $observation->f_windDir . ' ' . $observation->f_windAvg . ' (gusting ' . $observation->f_windGust . ')'])), $dividerBlock, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Next four hours:*')));
 
 
     // Grab the forecast data
@@ -45,7 +46,7 @@
       $observation = new TempestObservation('hour_forecast', $hourlyData[$hour]);
 
       array_push($blks, array('type'=>'section','fields'=>array(['type'=>'mrkdwn','text'=>'*' . $observation->f_timestamp . '*: ' . $slackConditionIcons[$observation->icon] . ' ' . $observation->f_temperature . ' (feels like ' . $observation->f_feelsLike . ')'],
-      ($observation->precip_probability > 0) ? ['type'=>'plain_text','text'=>$observation->f_precip_probability . ' chance ' . $observation->f_precip_type . ' | ' . $observation->f_windDir . ' ' . $observation->f_windAvg,'emoji'=>true] : ['type'=>'plain_text','text'=>$observation->f_windDir . ' ' . $observation->f_windAvg,'emoji'=>true])));
+      ($observation->precip_probability > 0) ? ['type'=>'plain_text','text'=>$observation->f_precip_probability . ' chance ' . $observation->f_precip_type . ' | ' . $observation->f_windDir . ' ' . $observation->f_windAvg . ' (gusting ' . $observation->f_windGust . ')','emoji'=>true] : ['type'=>'plain_text','text'=>$observation->f_windDir . ' ' . $observation->f_windAvg . ' (gusting ' . $observation->f_windGust . ')','emoji'=>true])));
       $hour++;
     }
     array_push($blks, $dividerBlock, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Next five days:*')));

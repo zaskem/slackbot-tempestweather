@@ -68,7 +68,7 @@ class TempestObservation {
   private function formatCurrentObservationStrings() {
     $this->f_timestamp = date('g:i a', $this->timestamp);
     $this->f_temperature = $this->convertCToF($this->air_temperature) . $this->tempUnitLabel;
-    $this->f_dew_point = $this->convertCToF($this->dew_point) . " $this->tempUnitLabel";
+    $this->f_dew_point = $this->convertCToF($this->dew_point) . $this->tempUnitLabel;
     $this->f_feelsLike = $this->convertCToF($this->feels_like) . $this->tempUnitLabel;
     $this->f_relative_humidity = $this->relative_humidity . "%";
     $this->f_pressure = $this->convertMbToInHg($this->station_pressure) . "$this->pressureUnitLabel";

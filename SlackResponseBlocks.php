@@ -23,7 +23,8 @@
         array_push($blocks, array('type'=>'section','fields'=>
           array(['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . '`'],['type'=>'mrkdwn','text'=>'Display current conditions'],
             ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' now`'],['type'=>'mrkdwn','text'=>'Display current conditions'],
-            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' now private`'],['type'=>'mrkdwn','text'=>'Display current conditions with a private response']
+            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' now private`'],['type'=>'mrkdwn','text'=>'Display current conditions with a private response'],
+            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' alerts`'],['type'=>'mrkdwn','text'=>'Display current weather alerts']
           )
         ), $dividerBlock, $keywordPrivateBlock, $dividerBlock, $botVersionBlock);
         break;
@@ -76,7 +77,8 @@
         array_push($blocks, array('type'=>'section','fields'=>
           array(['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . '`'],['type'=>'mrkdwn','text'=>'Display current conditions'],
             ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' now`'],['type'=>'mrkdwn','text'=>'Display current conditions'],
-            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' private`'],['type'=>'mrkdwn','text'=>'Display current conditions privately']
+            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' private`'],['type'=>'mrkdwn','text'=>'Display current conditions privately'],
+            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' alerts`'],['type'=>'mrkdwn','text'=>'Display current weather alerts']
           )
         ));
         array_push($blocks, array('type'=>'section','fields'=>
@@ -108,12 +110,15 @@
   }
 
 
-  function getCurrentObservationBlocks($observation, $args = null) {
-    global $helpContextBlock, $dividerBlock;
+  function getCurrentObservationBlocks($observation, $alert = null, $args = null) {
+    global $helpContextBlock, $dividerBlock, $bot_slashcommand;
 
-    $blocks = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Current conditions at ' . $observation->f_timestamp,'emoji'=>true))];
-    array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'Temperature: '. $observation->f_temperature . ' (feels like ' . $observation->f_feelsLike . ')')));
-    array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'Wind at ' . $observation->f_windAvg . ' from the ' . $observation->f_windDir . '.')), $dividerBlock, $helpContextBlock);
+    $blocks =  [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Current conditions at ' . $observation->f_timestamp,'emoji'=>true))];
+    if (!is_null($alert)) {
+      array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>':warning: *' . $alert->event . '* :warning:')), array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$alert->alertHeadline)), array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$alert->alertInstructions)), array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>'View full alert details with `' . $bot_slashcommand . ' alerts`')]), $dividerBlock);
+    }
+    array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>':thermometer: Temperature: '. $observation->f_temperature . ' (feels like ' . $observation->f_feelsLike . ')')));
+    array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>':dash: Wind: ' . $observation->f_windAvg . ' from the ' . $observation->f_windDir . '.')), $dividerBlock, $helpContextBlock);
 
     return $blocks;
   }

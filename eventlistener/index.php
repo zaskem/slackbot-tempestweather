@@ -22,6 +22,18 @@
         // Determine what to do next based on the tab in scope
         switch ($eventArray['event']['tab']) {
           case 'home': // Home Tab
+            require $botCodePath . '/NWSAlertFunctions.php';
+            $alertDataFile = $botCodePath . '/config/nwsAlerts.generated.php';
+            // Generate alert data as necessary
+            if (file_exists($alertDataFile)) {
+              // Refresh the alert data if it's older than 10 minutes
+              if (filemtime($alertDataFile) < (time() - 600)) {
+                getAlertsByPoint(true);
+              }
+            } else {
+              getAlertsByPoint(true);
+            }
+
             // Generate the App Home tab payload based on the calling user's ID
             $slackPayload = json_encode(getAppHomeBlocks($eventArray['event']['user']));
 

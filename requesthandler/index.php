@@ -77,6 +77,9 @@
     if ((!isset($parsedArgs[0])) || ('' == $parsedArgs[0]) || ("now" == trim($parsedArgs[0])) || ("private" == trim($parsedArgs[0]))) {
       // Does the command match any of the 'current conditions' (incl. no text/default) patterns?
       $natureOfRequest = 'current';
+    } else if (("alerts" == trim($parsedArgs[0]))) {
+      // Is the argument 'yesterday' or negative (history)?
+      $natureOfRequest = 'alerts';
     } else if ("next" == trim($parsedArgs[0])) {
       // Does the command match any of the 'forecast range' keyword patterns?
       $natureOfRequest = 'forecastrange';
@@ -86,7 +89,7 @@
     } else if (("yesterday" == trim($parsedArgs[0])) || (strtotime($commandArgs) < time())) {
       // Is the argument 'yesterday' or negative (history)?
       $natureOfRequest = 'dayhistory';
-    } else {
+   } else {
       // Assume a forecast otherwise
       $natureOfRequest = 'forecast';
     }
@@ -95,7 +98,24 @@
     switch ($natureOfRequest) {
       // Current Observation
       case 'current':
+        require $botCodePath . '/NWSAlert.php';
+        require $botCodePath . '/NWSAlertFunctions.php';
         $slackbot_details['icon_emoji'] = ':thermometer:';
+
+        $alertDataFile = $botCodePath . '/config/nwsAlerts.generated.php';
+        // Refresh the alert data if it's older than 10 minutes
+        if (filemtime($alertDataFile) < (time() - 600)) {
+          getAlertsByPoint(true);
+        }
+
+        $alertData = include $alertDataFile;
+        $activeAlerts = count($alertData['features']);
+
+        if ($activeAlerts > 0) {
+          $alert = new NWSAlert($alertData['features'][0]);
+        } else {
+          $alert = null;
+        }
 
         getLastStationObservation();
         $lastObservation = include $botCodePath . '/config/lastObservation.generated.php';
@@ -104,7 +124,7 @@
         // Create basic text response (fallback)
         $responseText = "At $observation->f_timestamp, the temperature was $observation->f_temperature (feels like $observation->f_feelsLike) with a $observation->f_windDir wind at $observation->f_windAvg.";
         // Use blocks for prettier response
-        $slackbot_details['blocks'] = getCurrentObservationBlocks($observation);
+        $slackbot_details['blocks'] = getCurrentObservationBlocks($observation, $alert);
 
         $result = SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
         if ($debug_bot) {
@@ -112,121 +132,42 @@
           print json_encode(array('response_type' => 'ephemeral', 'text' => $_POST['command'] . ' ' . $_POST['text'] . ' output response: ' . $result));
         }
         break;
-      // Multi-Day history range/period summary
-      case 'historyrange':
-        // Parse out and translate the supported statements
-        $historyArgs = explode(' ', $commandArgs);
-        if ("last" == trim($historyArgs[0])) {
-          // "last" [week/month/year]
-          if ("week" == trim($historyArgs[1])) {
-            // Relative to now
-            //$startRange = strtotime('yesterday') - 518400;
-            //$endRange = strtotime('yesterday') + 86340;
-            // Last week (assuming Monday == beginning of week)
-            $startRange = strtotime('midnight Monday this week') - 604800;
-            $endRange = strtotime('midnight Monday this week') - 60;
-          }
-          if ("month" == trim($historyArgs[1])) {
-            $startRange = strtotime('midnight first day of last month');
-            $endRange = strtotime('midnight last day of last month') + 86340;
-          }
-          if ("year" == trim($historyArgs[1])) {
-            $startRange = strtotime('midnight first day of January last year');
-            $endRange = strtotime('midnight last day of December last year') + 86340;
-          }
-          // Correct start time if it precedes the bot's history
-          if ($startRange < strtotime($bot_historyStarts)) {
-            $startRange = strtotime($bot_historyStarts);
-          }
-        } else if ("this" == trim($historyArgs[0])) {
-          // "this" [week/month/year]
-          if ("week" == trim($historyArgs[1])) {
-            $startRange = strtotime('midnight Monday this week');
-          }
-          if ("month" == trim($historyArgs[1])) {
-            $startRange = strtotime('midnight first day of this month');
-          }
-          if ("year" == trim($historyArgs[1])) {
-            $startRange = strtotime('midnight first day of January this year');
-          }
-          $endRange = time();
-          // Correct start time if it precedes the bot's history
-          if ($startRange < strtotime($bot_historyStarts)) {
-            $startRange = strtotime($bot_historyStarts);
-          }
-        } else {
-          // Other date range provided; split by the "to" keyword
-          $historyDates = explode(' to ', $commandArgs);
-          // Correct dates if submitted in the wrong order and/or if start time precedes the bot's history
-          if (strtotime($historyDates[0]) > strtotime($historyDates[1])) {
-            if (strtotime($historyDates[1]) < strtotime($bot_historyStarts)) {
-              $startRange = strtotime($bot_historyStarts);
-            } else {
-              $startRange = strtotime($historyDates[1]);
-            }
-            $endRange = strtotime($historyDates[0]) + 86340;
-          } else {
-            if (strtotime($historyDates[0]) < strtotime($bot_historyStarts)) {
-              $startRange = strtotime($bot_historyStarts);
-            } else {
-              $startRange = strtotime($historyDates[0]);
-            }
-            $endRange = strtotime($historyDates[1]) + 86340;
-          }
+      // Alerts
+      case 'alerts':
+        require $botCodePath . '/NWSAlert.php';
+        require $botCodePath . '/NWSAlertFunctions.php';
+        $slackbot_details['icon_emoji'] = ':warning:';
+
+        $alertDataFile = $botCodePath . '/config/nwsAlerts.generated.php';
+        // Refresh the alert data if it's older than 10 minutes
+        if (filemtime($alertDataFile) < (time() - 600)) {
+          getAlertsByPoint(true);
         }
 
-        // Time to fail or fetch an observation range
-        if ($endRange < strtotime($bot_historyStarts)) {
-          // A pre-historic request; fail kindly.
-          header("Content-Type: application/json");
-          $response = array('response_type' => 'ephemeral', 'text' => "The end of your range (`". date('Y-m-d', $endRange) . "`) is before this bot's history start date of $bot_historyStarts. Try again with a different date range. Bot help is availble with the `$bot_slashcommand help` command.");
-          print json_encode($response);
-          die();
-        } else {
-          // Process the request
-          $slackbot_details['icon_emoji'] = ':book:';
+        $alertData = include $alertDataFile;
+        $activeAlerts = count($alertData['features']);
 
-          getStationObservationsByRange($startRange, $endRange);
-          $observations = new TempestObservation('history', json_decode(file_get_contents($tempestStationHistoryPath . 'stationHistory.generated.json'), true)['obs']);
-          
+        if ($activeAlerts > 1) {
+          // TODO: Handle situation in which more than one alert is active at a given time
+          //  Possibly rank by the alertSeverityIndex?    
+        } else if ($activeAlerts > 0) {
+          $alert = new NWSAlert($alertData['features'][0]);
+
           // Create basic text response (fallback)
-          $responseText = "During the period of $observations->f_historyDateStart to $observations->f_historyDateEnd, the high temperature was $observations->f_highTemp with a low of $observations->f_lowTemp. The average temperature for the period was $observations->f_avgTemp. A high wind gust of $observations->f_highWindGust was observed $observations->f_highWindTimestamp.";
+          $responseText = $alert->headline;
           // Use blocks for prettier response
-          $slackbot_details['blocks'] = getMultiDayHistoryBlocks($observations);
+          $slackbot_details['blocks'] = $alert->getFullAlertBlocks();
 
           $result = SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
           if ($debug_bot) {
             header("Content-Type: application/json");
             print json_encode(array('response_type' => 'ephemeral', 'text' => $_POST['command'] . ' ' . $_POST['text'] . ' output response: ' . $result));
           }
-        }
-        break;
-      // Standard "single-day" history summary
-      case 'dayhistory':
-        if (strtotime($commandArgs) < strtotime($bot_historyStarts)) {
-          // A pre-historic request; fail kindly.
-          header("Content-Type: application/json");
-          $response = array('response_type' => 'ephemeral', 'text' => "`$_POST[text]` is before this bot's history start date of $bot_historyStarts. Try again with a more current date. Bot help is availble with the `$bot_slashcommand help` command.");
-          print json_encode($response);
-          die();
         } else {
-          $slackbot_details['icon_emoji'] = ':book:';
-
-          $fileToGrab = $tempestStationHistoryPath . date('Y-m-d', strtotime($commandArgs)) . '.json';
-          if (strtotime($commandArgs) >= strtotime('yesterday')) {
-            // Always grab a refreshed copy of data for the most recent ~0-48 hours
-            getStationObservationsByDay(date('Y-m-d', strtotime($commandArgs)));
-          }
-          if (!file_exists($fileToGrab)) {
-            // Pull the requested day's data if it doesn't exist.
-            getStationObservationsByDay(date('Y-m-d', strtotime($commandArgs)));
-          }
-          $observation = new TempestObservation('history', json_decode(file_get_contents($fileToGrab), true)['obs']);
-          
           // Create basic text response (fallback)
-          $responseText = "On $observation->f_historyDateStart, the high temperature was $observation->f_highTemp with a low of $observation->f_lowTemp. The average temperature for the day was $observation->f_avgTemp. A high wind gust of $observation->f_highWindGust was observed $observation->f_highWindTimestamp.";
+          $responseText = "No active alerts at this time.";
           // Use blocks for prettier response
-          $slackbot_details['blocks'] = getDayHistoryBlocks($observation);
+          $slackbot_details['blocks'] = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Active NWS alerts','emoji'=>true)), array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'No active alerts at this time.'))];
 
           $result = SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
           if ($debug_bot) {
@@ -352,6 +293,129 @@
             $response = array('response_type' => 'ephemeral', 'text' => "`$_POST[text]` is not a valid time specification for this bot. Bot help is availble with the `$bot_slashcommand help` command.");
             print json_encode($response);
             die();
+          }
+        }
+        break;
+      // Multi-Day history range/period summary
+      case 'historyrange':
+        // Parse out and translate the supported statements
+        $historyArgs = explode(' ', $commandArgs);
+        if ("last" == trim($historyArgs[0])) {
+          // "last" [week/month/year]
+          if ("week" == trim($historyArgs[1])) {
+            // Relative to now
+            //$startRange = strtotime('yesterday') - 518400;
+            //$endRange = strtotime('yesterday') + 86340;
+            // Last week (assuming Monday == beginning of week)
+            $startRange = strtotime('midnight Monday this week') - 604800;
+            $endRange = strtotime('midnight Monday this week') - 60;
+          }
+          if ("month" == trim($historyArgs[1])) {
+            $startRange = strtotime('midnight first day of last month');
+            $endRange = strtotime('midnight last day of last month') + 86340;
+          }
+          if ("year" == trim($historyArgs[1])) {
+            $startRange = strtotime('midnight first day of January last year');
+            $endRange = strtotime('midnight last day of December last year') + 86340;
+          }
+          // Correct start time if it precedes the bot's history
+          if ($startRange < strtotime($bot_historyStarts)) {
+            $startRange = strtotime($bot_historyStarts);
+          }
+        } else if ("this" == trim($historyArgs[0])) {
+          // "this" [week/month/year]
+          if ("week" == trim($historyArgs[1])) {
+            $startRange = strtotime('midnight Monday this week');
+          }
+          if ("month" == trim($historyArgs[1])) {
+            $startRange = strtotime('midnight first day of this month');
+          }
+          if ("year" == trim($historyArgs[1])) {
+            $startRange = strtotime('midnight first day of January this year');
+          }
+          $endRange = time();
+          // Correct start time if it precedes the bot's history
+          if ($startRange < strtotime($bot_historyStarts)) {
+            $startRange = strtotime($bot_historyStarts);
+          }
+        } else {
+          // Other date range provided; split by the "to" keyword
+          $historyDates = explode(' to ', $commandArgs);
+          // Correct dates if submitted in the wrong order and/or if start time precedes the bot's history
+          if (strtotime($historyDates[0]) > strtotime($historyDates[1])) {
+            if (strtotime($historyDates[1]) < strtotime($bot_historyStarts)) {
+              $startRange = strtotime($bot_historyStarts);
+            } else {
+              $startRange = strtotime($historyDates[1]);
+            }
+            $endRange = strtotime($historyDates[0]) + 86340;
+          } else {
+            if (strtotime($historyDates[0]) < strtotime($bot_historyStarts)) {
+              $startRange = strtotime($bot_historyStarts);
+            } else {
+              $startRange = strtotime($historyDates[0]);
+            }
+            $endRange = strtotime($historyDates[1]) + 86340;
+          }
+        }
+
+        // Time to fail or fetch an observation range
+        if ($endRange < strtotime($bot_historyStarts)) {
+          // A pre-historic request; fail kindly.
+          header("Content-Type: application/json");
+          $response = array('response_type' => 'ephemeral', 'text' => "The end of your range (`". date('Y-m-d', $endRange) . "`) is before this bot's history start date of $bot_historyStarts. Try again with a different date range. Bot help is availble with the `$bot_slashcommand help` command.");
+          print json_encode($response);
+          die();
+        } else {
+          // Process the request
+          $slackbot_details['icon_emoji'] = ':book:';
+
+          getStationObservationsByRange($startRange, $endRange);
+          $observations = new TempestObservation('history', json_decode(file_get_contents($tempestStationHistoryPath . 'stationHistory.generated.json'), true)['obs']);
+          
+          // Create basic text response (fallback)
+          $responseText = "During the period of $observations->f_historyDateStart to $observations->f_historyDateEnd, the high temperature was $observations->f_highTemp with a low of $observations->f_lowTemp. The average temperature for the period was $observations->f_avgTemp. A high wind gust of $observations->f_highWindGust was observed $observations->f_highWindTimestamp.";
+          // Use blocks for prettier response
+          $slackbot_details['blocks'] = getMultiDayHistoryBlocks($observations);
+
+          $result = SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
+          if ($debug_bot) {
+            header("Content-Type: application/json");
+            print json_encode(array('response_type' => 'ephemeral', 'text' => $_POST['command'] . ' ' . $_POST['text'] . ' output response: ' . $result));
+          }
+        }
+        break;
+      // Standard "single-day" history summary
+      case 'dayhistory':
+        if (strtotime($commandArgs) < strtotime($bot_historyStarts)) {
+          // A pre-historic request; fail kindly.
+          header("Content-Type: application/json");
+          $response = array('response_type' => 'ephemeral', 'text' => "`$_POST[text]` is before this bot's history start date of $bot_historyStarts. Try again with a more current date. Bot help is availble with the `$bot_slashcommand help` command.");
+          print json_encode($response);
+          die();
+        } else {
+          $slackbot_details['icon_emoji'] = ':book:';
+
+          $fileToGrab = $tempestStationHistoryPath . date('Y-m-d', strtotime($commandArgs)) . '.json';
+          if (strtotime($commandArgs) >= strtotime('yesterday')) {
+            // Always grab a refreshed copy of data for the most recent ~0-48 hours
+            getStationObservationsByDay(date('Y-m-d', strtotime($commandArgs)));
+          }
+          if (!file_exists($fileToGrab)) {
+            // Pull the requested day's data if it doesn't exist.
+            getStationObservationsByDay(date('Y-m-d', strtotime($commandArgs)));
+          }
+          $observation = new TempestObservation('history', json_decode(file_get_contents($fileToGrab), true)['obs']);
+          
+          // Create basic text response (fallback)
+          $responseText = "On $observation->f_historyDateStart, the high temperature was $observation->f_highTemp with a low of $observation->f_lowTemp. The average temperature for the day was $observation->f_avgTemp. A high wind gust of $observation->f_highWindGust was observed $observation->f_highWindTimestamp.";
+          // Use blocks for prettier response
+          $slackbot_details['blocks'] = getDayHistoryBlocks($observation);
+
+          $result = SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
+          if ($debug_bot) {
+            header("Content-Type: application/json");
+            print json_encode(array('response_type' => 'ephemeral', 'text' => $_POST['command'] . ' ' . $_POST['text'] . ' output response: ' . $result));
           }
         }
         break;

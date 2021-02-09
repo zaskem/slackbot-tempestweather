@@ -3,6 +3,7 @@
   require_once __DIR__ . '/config/slack.php';
   require __DIR__ . '/TempestAPIFunctions.php';
   require __DIR__ . '/TempestObservation.php';
+  require __DIR__ . '/NWSAlert.php';
 
   // Static/Reused block content
   $botVersionBlock = array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>$bot_name . ' version: ' . $bot_version)]);
@@ -17,9 +18,18 @@
    */
   function getAppHomeBlocks($user_id) {
     global $dividerBlock, $helpContextBlock, $botVersionBlock, $slackConditionIcons, $tempUnitLabel, $pressureUnitLabel,$windUnitLabel;
-
+  
     // Header Block Content
     $blks = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Tempest Weather Bot'))];
+    // Alert Data
+    $alertData = include __DIR__ . '/config/nwsAlerts.generated.php';
+    $activeAlerts = count($alertData['features']);
+
+    if ($activeAlerts > 0) {
+      $alert = new NWSAlert($alertData['features'][0]);
+      $alertBlocks = $alert->getHomeBlocks();
+      array_push($blks, $alertBlocks[0], $alertBlocks[1], $dividerBlock);
+    }
 
 
     // Current Observation

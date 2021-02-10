@@ -1,4 +1,12 @@
 <?php
+/**
+ * TempestObservation Class
+ *
+ * A class designed to consistently handle individual Tempest weather station objservations (all types).
+ * 
+ * This class was designed specifically for the purposes of use in the Slack Tempest WeatherBot
+ *  https://tempestweatherbot.mzonline.com/
+ */
 class TempestObservation {
   private $validObservationTypes = array('history','current','day_forecast','hour_forecast');
   private $observationType;
@@ -9,7 +17,15 @@ class TempestObservation {
   private $distanceUnitLabel;
   private $solarRadLabel;
 
-
+  /**
+   * __construct override and property assignments
+   * 
+   * @args $observationType - string of the type of observation (see $validObservationTypes).
+   *  The TempestObservation class properties can change wildly based on the nature of the observation
+   *    due to the data returned from the Tempest API. This argument allows the constructor to
+   *    adequately handle properties and calculations for disparate situations.
+   * @args $observationData - array of an individual Tempest observation.
+   */
   public function __construct(string $observationType, array $observationData) {
     try {
       $this->validObsType($observationType);
@@ -37,6 +53,17 @@ class TempestObservation {
       }
   }
 
+
+  /**
+   * validObsType($type) - check for a valid observation type
+   * 
+   * This function is used in the constructor override to enforce a specific and valid observation type
+   *  as Things Will Go Very Wrong when the type of observation is misassociated with the observation data.
+   * 
+   * Much more a 'safety check' than anything.
+   * 
+   * @return boolean true
+   */
   private function validObsType($type) {
     if (!in_array($type, $this->validObservationTypes)) {
       throw new Exception('Invalid observation type specified.');
@@ -45,6 +72,10 @@ class TempestObservation {
     }
   }
 
+  
+  /**
+   * setDisplayLabels() - set the display label properties based on the bot's configuration
+   */
   private function setDisplayLabels() {
     include __DIR__ . '/config/bot.php';
     $this->tempUnitLabel = $tempUnitLabel;
@@ -55,16 +86,30 @@ class TempestObservation {
     $this->solarRadLabel = $solarRadLabel;
   }
 
+
+  /**
+   * assignPropertiesFromData($data) - dynamically assign all $data keys/values as object properties
+   */
   private function assignPropertiesFromData($data) {
     foreach($data as $key => $value) {
       $this->{$key} = $value;
     }
   }
 
+
+  /**
+   * getObservationType()
+   * 
+   * @return string observationType 
+   */
   public function getObservationType() {
     return $this->observationType;
   }
 
+
+  /**
+   * formatCurrentObservationStrings() - format properties for a current observation.
+   */
   private function formatCurrentObservationStrings() {
     $this->f_timestamp = date('g:i a', $this->timestamp);
     $this->f_temperature = $this->convertCToF($this->air_temperature) . $this->tempUnitLabel;
@@ -80,6 +125,10 @@ class TempestObservation {
     $this->f_brightness = number_format($this->brightness, 0, '.', ','). ' lx';
   }
 
+
+  /**
+   * formatDayForecastObservationStrings() - format properties for a day-based forecast observation.
+   */
   private function formatDayForecastObservationStrings() {
     $this->f_timestamp = date('l, F j', $this->day_start_local);
     $this->f_shortTimestamp = date('l', $this->day_start_local);
@@ -91,6 +140,10 @@ class TempestObservation {
     $this->f_sunset = date('g:i a', $this->sunset);
   }
 
+
+  /**
+   * formatHourForecastObservationStrings() - format properties for an hour-based forecast observation.
+   */
   private function formatHourForecastObservationStrings() {
     $stationMetadata = include __DIR__ . '/config/stationMetadata.generated.php';
     $stationElevation = $stationMetadata['station_meta']['elevation'];
@@ -108,6 +161,10 @@ class TempestObservation {
     $this->f_windGust = $this->wind_gust . " $this->windUnitLabel";
   }
 
+
+  /**
+   * summarizeHistoryData($data) - calculate, summarize, and format properties for a "history" observation.
+   */
   private function summarizeHistoryData($data) {
     // CREATE CALCULATED VALUES
     $this->totalObs = count($data);
@@ -214,7 +271,6 @@ class TempestObservation {
   }
 
 
-
   // Utility Functions
   /**
    * min_mod() function modification to ignore "null" values, sourced from https://www.php.net/manual/en/function.min.php
@@ -234,6 +290,7 @@ class TempestObservation {
     return $min;  
   }
 
+
   /**
    * getParentKey($needle, $haystack, $searchColumn) - Returns the "outer" (parent) key in which $needle matches a value in $searchColumn
    * 
@@ -247,6 +304,7 @@ class TempestObservation {
       }
     }
   }
+
 
   /**
    * Functions provided for converting between units.

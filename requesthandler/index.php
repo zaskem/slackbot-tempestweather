@@ -102,13 +102,10 @@
         require $botCodePath . '/NWSAlertFunctions.php';
         $slackbot_details['icon_emoji'] = ':thermometer:';
 
-        $alertDataFile = $botCodePath . '/config/nwsAlerts.generated.php';
-        // Refresh the alert data if it's older than 10 minutes
-        if (filemtime($alertDataFile) < (time() - 600)) {
-          getAlertsByPoint(true);
-        }
+        // Refresh the alert data
+        updateAlertDataFile();
 
-        $alertData = include $alertDataFile;
+        $alertData = include $botCodePath . '/config/nwsAlerts.generated.php';
         $activeAlerts = count($alertData['features']);
 
         if ($activeAlerts > 0) {
@@ -138,13 +135,10 @@
         require $botCodePath . '/NWSAlertFunctions.php';
         $slackbot_details['icon_emoji'] = ':warning:';
 
-        $alertDataFile = $botCodePath . '/config/nwsAlerts.generated.php';
-        // Refresh the alert data if it's older than 10 minutes
-        if (filemtime($alertDataFile) < (time() - 600)) {
-          getAlertsByPoint(true);
-        }
+        // Refresh the alert data
+        updateAlertDataFile();
 
-        $alertData = include $alertDataFile;
+        $alertData = include $botCodePath . '/config/nwsAlerts.generated.php';
         $activeAlerts = count($alertData['features']);
 
         if ($activeAlerts > 1) {

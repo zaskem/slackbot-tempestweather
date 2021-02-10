@@ -8,6 +8,7 @@ Example commands (e.g. `/weather [argument]`)
 | `/weather <blank>` | Display current conditions |
 | `/weather now` | Display current conditions |
 | `/weather private` | Display current conditions privately |
+| `/weather alerts` | Display current weather alerts |
 | `/weather Tuesday` | Display the forecast for Tuesday |
 | `/weather 8 hour` | Display the forecast +8 hours from now |
 | `/weather 85 hours` | Display the forecast 85 hours from now |
@@ -42,6 +43,7 @@ The Tempest WeatherBot's default behavior is to display the current/most recent 
 | `/weather <blank>` | Display current conditions |
 | `/weather now` | Display current conditions |
 | `/weather private` | Display current conditions privately |
+| `/weather alerts` | Display current weather alerts |
 
 ---
 ## Forecast Commands and Range
@@ -99,6 +101,16 @@ Note: `week`s are relative to Mondays.
 
   ![Example current conditions response](https://github.com/zaskem/slackbot-tempestweather/blob/gh-pages/images/current.png?raw=true)
 
+  ![example response for current conditions with alert](https://github.com/zaskem/slackbot-tempestweather/blob/gh-pages/images/currentwithalert.png?raw=true)
+
+---
+
+### Active NWS Weather Alert
+
+  `/weather alerts`:
+
+  ![Example alert detail response](https://github.com/zaskem/slackbot-tempestweather/blob/gh-pages/images/alerts.png?raw=true)
+
 ---
 
 ### Weather Forecasts
@@ -153,6 +165,6 @@ Note: `week`s are relative to Mondays.
 ---
 
 ### Bot Home Tab
-The bot has an available home tab which, if optionally enabled, provides for a condensed single-page view of current conditions, four-hour forecast, and five-day forecast.
+The bot has an available home tab which, if optionally enabled, provides for a condensed single-page view of current conditions and alerts, four-hour forecast, and five-day forecast.
 
   ![Example bot home tab view](https://github.com/zaskem/slackbot-tempestweather/blob/gh-pages/images/hometab.png?raw=true)

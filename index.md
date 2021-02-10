@@ -3,7 +3,9 @@ The Slack Tempest WeatherBot was developed by [@zaskem](https://github.com/zaske
 
 The bot itself requires some form of personal access to a [WeatherFlow Tempest station](https://weatherflow.com/tempest-weather-system/). Per the Tempest [Remote Data Access Policy](https://weatherflow.github.io/Tempest/api/remote-developer-policy.html) this is to be your own station, or definitely a non-commercial endeavor with a close friend otherwise.
 
-The general idea is to have a Slack slash command (e.g. `/weather`) which responds with current conditions, a forecast, or other information in real-time. Tempest has web and mobile apps, but for folks who are always/often in Slack it's simply more convenient and cool. An example response for current conditions:
+The general idea is to have a Slack slash command (e.g. `/weather`) which responds with current conditions, a forecast, or other information in real-time. Tempest has web and mobile apps, but for folks who are always/often in Slack it's simply more convenient and cool. An example response for current conditions (with and without an active alert):
+
+![example response for current conditions with alert](https://github.com/zaskem/slackbot-tempestweather/blob/gh-pages/images/currentwithalert.png?raw=true)
 
 ![example response for current conditions](https://github.com/zaskem/slackbot-tempestweather/blob/gh-pages/images/current.png?raw=true)
 

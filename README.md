@@ -24,6 +24,7 @@ Three configuration files exist in the `config/` directory. Example/Stubout vers
 * `bot.php`
 * `slack.php`
 * `tempest.php`
+* `nws.php`
 
 Edit each file as necessary for your bot. Note that as the bot goes into production, several dynamic `[title].generated.php` files will also end up in the `config/` directory. They, and files automatically generated in the `config/history/` directory, can be ignored and should not be edited.
 
@@ -34,7 +35,7 @@ Before the bot can properly respond to requests, two scripts must be manually in
 Assuming both commands complete without issue, you can "install" the web request handler for your slash command. It is very important to understand that the `requesthandler/index.php` file is _not_ intended to be present at the same location as the rest of the bot source. `requesthandler/index.php` should be copied to the path you specified as the `Request URL` of your slash command and edit line 6 (`$botCodePath`) accordingly. This ensures separation between components of the bot (e.g. keeping bot source and keys not publicly-available).
 
 ### Optional "App Home" Functionality
-If desired, the "App Home Tab" can be easily enabled for this bot. Enabling the bot app home tab provides a condensed single-page view of current conditions, a four-hour forecast, and the five-day forecast without invoking any commands, and is refreshed each time the tab is opened.
+If desired, the "App Home Tab" can be easily enabled for this bot. Enabling the bot app home tab provides a condensed single-page view of current conditions and alerts, a four-hour forecast, and the five-day forecast without invoking any commands, and is refreshed each time the tab is opened.
 
 A handful of additional items must be configured to enable the home tab:
 * Enable `Home Tab` on the bot's `App Home` feature settings;
@@ -72,7 +73,10 @@ There are several possible causes of trouble in using the bot. Generally speakin
 * Misconfigured request or event responder URLs (often the result of not properly setting `$botCodePath`); and
 * Bad block structure/JSON for the Slack response.
 
-Setting `$debug_bot` to `true` in `config/bot.php` will output much information about the process and arguments provided. These are relayed in the Acknowledgement response for a given command and will show up as a private response in Slack.
+Setting `$debug_bot` to `true` in `config/bot.php` will output much information about the process and arguments provided. These are relayed in the Acknowledgement response for a given command and will show up as a private response in Slack. Further troubleshooting can be handled by monitoring the PHP/Apache `error_log` file.
+
+#### A note about debugging the App Home Tab:
+In most circumstances, strange behavior on the App Home tab is caused by processing delays (stalled API responses) or something unexpected in the block structure. Setting `$debug_bot` to `true` in `config/bot.php` will _rarely_ help troubleshoot such block-building issues due to how the event listener behaves.
 
 ## Enhancements on the Radar
 Several [enhancements](https://github.com/zaskem/slackbot-tempestweather/labels/enhancement) are in the queue for future development. These are tracked and managed via GitHub.

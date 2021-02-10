@@ -1,0 +1,19 @@
+<?php
+// API DETAILS AT https://www.weather.gov/documentation/services-web-api#/
+  $nwsUserAgent = "(Your WeatherBot Name, contactinfo, email@host)";
+  $nwsZoneID = ""; // A given location will likely have two options (zone and county), e.g. MNZ000 / MNC000
+
+  $stationMetadata = include __DIR__ . '/stationMetadata.generated.php';
+  $stationLat = round($stationMetadata['latitude'], 4, PHP_ROUND_HALF_DOWN);
+  $stationLong = round($stationMetadata['longitude'], 4, PHP_ROUND_HALF_DOWN);
+
+  $alertUrgency = 'expected'; // immediate, expected, future, past, unknown, null
+
+  $alertTypeEndpoint = 'https://api.weather.gov/alerts/types';
+
+  $pointEndpoint = "https://api.weather.gov/points/$stationLat%2C$stationLong";
+  $zoneEndpoint = "https://api.weather.gov/zones?point=$stationLat%2C$stationLong";
+  $pointAlertEndpointBase = "https://api.weather.gov/alerts/active?point=$stationLat%2C$stationLong";
+  $pointAlertEndpoint = "https://api.weather.gov/alerts/active?point=$stationLat%2C$stationLong&urgency=$alertUrgency";
+  $zoneAlertEndpointBase = "https://api.weather.gov/alerts/active/zone/$nwsZoneID";
+?>

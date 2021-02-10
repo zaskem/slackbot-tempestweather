@@ -1,8 +1,18 @@
 <?php
+/**
+ * NWSAlert Class
+ *
+ * A class designed to consistently handle individual NWS API Web Service alerts.
+ * 
+ * This class was designed specifically for the purposes of use in the Slack Tempest WeatherBot
+ *  https://tempestweatherbot.mzonline.com/
+ */
 class NWSAlert {
   private $severityLevels = array(0=>'', 1=>'unknown',2=>'minor',3=>'moderate',4=>'severe',5=>'extreme');
 
-
+  /**
+   * __construct override and property assignments
+   */
   public function __construct(array $alertFeature) {
     $this->assignPropertiesFromData($alertFeature['properties']);
 
@@ -16,20 +26,42 @@ class NWSAlert {
     $this->alertInstructions = $this->reformatNWSTextBlocks($this->instruction);
   }
 
-  public function objectToString() {
+
+  /**
+   * objectReferencesToString() - experimental/discovery function to output nested object properties
+   * 
+   * @return string of array data
+   */
+  public function objectReferencesToString() {
     return print_r($this->references);
   }
 
+
+  /**
+   * assignPropertiesFromData($data) - dynamically assign all $data keys/values as object properties
+   */
   private function assignPropertiesFromData($data) {
     foreach($data as $key => $value) {
       $this->{$key} = $value;
     }
   }
 
+  
+  /**
+   * getSeverityLevel() - return the numeric severity ranking for an alert
+   * 
+   * @return integer severity level (based on $severityLevels)
+   */
   public function getSeverityLevel() {
     return $this->alertSeverityLevel;
   }
 
+
+  /**
+   * getFullAlertBlocks() - return Slack blocks for "full" alert data
+   * 
+   * @return array of Slack blocks
+   */
   public function getFullAlertBlocks() {
     $blocks = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>$this->alertHeadline,'emoji'=>true))];
     array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$this->alertDetails)));
@@ -39,6 +71,12 @@ class NWSAlert {
     return $blocks;
   }
 
+
+  /**
+   * getSummaryAlertBlocks() - return Slack blocks for an alert summary
+   * 
+   * @return array of Slack blocks
+   */
   public function getSummaryAlertBlocks() {
     $blocks = [array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>':warning: *' . $this->event . '* :warning:'))];
     array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$this->alertHeadline)), array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$this->alertInstructions)));
@@ -46,6 +84,12 @@ class NWSAlert {
     return $blocks;
   }
 
+
+  /**
+   * getHomeBlocks() - return Slack blocks for the App Home Tab
+   * 
+   * @return array of Slack blocks
+   */
   public function getHomeBlocks() {
     $blocks = [array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>':warning: *' . $this->event . '*'))];
     array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>ucfirst($this->alertHeadline))));
@@ -55,7 +99,7 @@ class NWSAlert {
 
 
   /**
-   * Function to address injected carriage returns in the text.
+   * Function to address injected carriage returns in the NWS alert text.
    */
   private function reformatNWSTextBlocks($inputText) {
     // This bit of magic is courtesy of https://gist.github.com/kellenmace/470c09a7787eb8c5b694d9233c1ee1e6

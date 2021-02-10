@@ -12,6 +12,8 @@ class NWSAlert {
 
   /**
    * __construct override and property assignments
+   * 
+   * @args $alertFeature - array of an individual 'feature' (alert) from NWS.
    */
   public function __construct(array $alertFeature) {
     $this->assignPropertiesFromData($alertFeature['properties']);

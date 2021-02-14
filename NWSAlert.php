@@ -24,7 +24,13 @@ class NWSAlert {
     $this->alertLastUpdated = date('l, F j, g:i a', strtotime($this->sent));
     $this->alertSeverityLevel = array_search(strtolower($this->severity), $this->severityLevels);
     $this->alertDetails = $this->reformatNWSTextBlocks($this->description);
+    $this->longHeadline = (strlen($this->parameters['NWSheadline'][0]) > 150);
     $this->alertHeadline = $this->parameters['NWSheadline'][0];
+    if ($this->longHeadline) {
+      $this->alertHeadlines = explode('... ...', $this->alertHeadline);
+    } else {
+      $this->alertHeadlines = array($this->alertHeadline);
+    }
     $this->alertInstructions = $this->reformatNWSTextBlocks($this->instruction);
   }
 
@@ -65,7 +71,14 @@ class NWSAlert {
    * @return array of Slack blocks
    */
   public function getFullAlertBlocks() {
-    $blocks = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>$this->alertHeadline,'emoji'=>true))];
+    if ($this->longHeadline) {
+      $blocks = [];
+      foreach ($this->alertHeadlines as $headline) {
+        array_push($blocks, array('type'=>'header','text'=>array('type'=>'plain_text','text'=>$headline,'emoji'=>true)));
+      }
+    } else {
+      $blocks = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>$this->alertHeadline,'emoji'=>true))];
+    }
     array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$this->alertDetails)));
     array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$this->alertInstructions)));
     array_push($blocks, array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>'Last update: ' . $this->alertLastUpdated . ' | Alert ends in ' . $this->intervalRemaining->days . ' days, ' . $this->intervalRemaining->h . ' hours, and ' . $this->intervalRemaining->i . ' minutes.')]));

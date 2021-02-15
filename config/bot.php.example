@@ -6,6 +6,7 @@
    *
    * Set `$bot_historyStarts` to the earliest (or desired earliest) reported history for the station in scope. This acts as a safety check/'beginning of epoch' for the bot history; timestamp requests _before_ this point will be ignored.
    */
+  date_default_timezone_set('America/Chicago');
   $bot_slashcommand = '/tempest';
   $bot_name = 'Tempest WeatherBot';
   $bot_historyStarts = '2010-01-01';

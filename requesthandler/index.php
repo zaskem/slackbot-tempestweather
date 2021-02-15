@@ -77,7 +77,7 @@
     if ((!isset($parsedArgs[0])) || ('' == $parsedArgs[0]) || ("now" == trim($parsedArgs[0])) || ("private" == trim($parsedArgs[0]))) {
       // Does the command match any of the 'current conditions' (incl. no text/default) patterns?
       $natureOfRequest = 'current';
-    } else if (("alerts" == trim($parsedArgs[0]))) {
+    } else if (("alerts" == trim($parsedArgs[0])) || ("alert" == trim($parsedArgs[0]))) {
       // Is the argument 'yesterday' or negative (history)?
       $natureOfRequest = 'alerts';
     } else if ("next" == trim($parsedArgs[0])) {
@@ -141,10 +141,13 @@
         $alertData = include $botCodePath . '/config/nwsAlerts.generated.php';
         $activeAlerts = count($alertData['features']);
 
+        /*
         if ($activeAlerts > 1) {
           // TODO: Handle situation in which more than one alert is active at a given time
           //  Possibly rank by the alertSeverityIndex?    
-        } else if ($activeAlerts > 0) {
+        } else
+        */
+        if ($activeAlerts > 0) {
           $alert = new NWSAlert($alertData['features'][0]);
 
           // Create basic text response (fallback)

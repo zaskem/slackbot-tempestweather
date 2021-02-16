@@ -23,14 +23,18 @@
     $blks = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Tempest Weather Bot'))];
     // Alert Data
     $alertData = include __DIR__ . '/config/nwsAlerts.generated.php';
-    $activeAlerts = count($alertData['features']);
+    if (array_key_exists('status', $alertData)) {
+      // We have an unexpected status (likely a service timeout)
+      array_push($blks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'There was a problem obtaining alert data: ' . $alertData['status'])), $dividerBlock);
+    } else {
+      $activeAlerts = count($alertData['features']);
 
-    if ($activeAlerts > 0) {
-      $alert = new NWSAlert($alertData['features'][0]);
-      $alertBlocks = $alert->getHomeBlocks();
-      array_push($blks, $alertBlocks[0], $alertBlocks[1], $dividerBlock);
+      if ($activeAlerts > 0) {
+        $alert = new NWSAlert($alertData['features'][0]);
+        $alertBlocks = $alert->getHomeBlocks();
+        array_push($blks, $alertBlocks[0], $alertBlocks[1], $dividerBlock);
+      }
     }
-
 
     // Current Observation
     getLastStationObservation();

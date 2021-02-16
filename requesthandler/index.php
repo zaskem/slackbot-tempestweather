@@ -106,12 +106,18 @@
         updateAlertDataFile();
 
         $alertData = include $botCodePath . '/config/nwsAlerts.generated.php';
-        $activeAlerts = count($alertData['features']);
-
-        if ($activeAlerts > 0) {
-          $alert = new NWSAlert($alertData['features'][0]);
-        } else {
+        if (array_key_exists('status', $alertData)) {
+          // We have an unexpected status (likely a service timeout)
+          // Silently fail/ignore
           $alert = null;
+        } else {
+          $activeAlerts = count($alertData['features']);
+
+          if ($activeAlerts > 0) {
+            $alert = new NWSAlert($alertData['features'][0]);
+          } else {
+            $alert = null;
+          }
         }
 
         getLastStationObservation();
@@ -139,21 +145,13 @@
         updateAlertDataFile();
 
         $alertData = include $botCodePath . '/config/nwsAlerts.generated.php';
-        $activeAlerts = count($alertData['features']);
-
-        /*
-        if ($activeAlerts > 1) {
-          // TODO: Handle situation in which more than one alert is active at a given time
-          //  Possibly rank by the alertSeverityIndex?    
-        } else
-        */
-        if ($activeAlerts > 0) {
-          $alert = new NWSAlert($alertData['features'][0]);
-
+        if (array_key_exists('status', $alertData)) {
+          // We have an unexpected status (likely a service timeout)
+          $slackbot_details['icon_emoji'] = ':octagonal_sign:';
           // Create basic text response (fallback)
-          $responseText = $alert->headline;
+          $responseText = "There was a problem obtaining alert data: $alertData[status]";
           // Use blocks for prettier response
-          $slackbot_details['blocks'] = $alert->getFullAlertBlocks();
+          $slackbot_details['blocks'] = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Active NWS alerts','emoji'=>true)), array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'There was a problem obtaining alert data: ' . $alertData['status']))];
 
           $result = SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
           if ($debug_bot) {
@@ -161,15 +159,38 @@
             print json_encode(array('response_type' => 'ephemeral', 'text' => $_POST['command'] . ' ' . $_POST['text'] . ' output response: ' . $result));
           }
         } else {
-          // Create basic text response (fallback)
-          $responseText = "No active alerts at this time.";
-          // Use blocks for prettier response
-          $slackbot_details['blocks'] = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Active NWS alerts','emoji'=>true)), array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'No active alerts at this time.'))];
+          $activeAlerts = count($alertData['features']);
 
-          $result = SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
-          if ($debug_bot) {
-            header("Content-Type: application/json");
-            print json_encode(array('response_type' => 'ephemeral', 'text' => $_POST['command'] . ' ' . $_POST['text'] . ' output response: ' . $result));
+          /*
+          if ($activeAlerts > 1) {
+            // TODO: Handle situation in which more than one alert is active at a given time
+            //  Possibly rank by the alertSeverityIndex?    
+          } else
+          */
+          if ($activeAlerts > 0) {
+            $alert = new NWSAlert($alertData['features'][0]);
+
+            // Create basic text response (fallback)
+            $responseText = $alert->headline;
+            // Use blocks for prettier response
+            $slackbot_details['blocks'] = $alert->getFullAlertBlocks();
+
+            $result = SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
+            if ($debug_bot) {
+              header("Content-Type: application/json");
+              print json_encode(array('response_type' => 'ephemeral', 'text' => $_POST['command'] . ' ' . $_POST['text'] . ' output response: ' . $result));
+            }
+          } else {
+            // Create basic text response (fallback)
+            $responseText = "No active alerts at this time.";
+            // Use blocks for prettier response
+            $slackbot_details['blocks'] = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Active NWS alerts','emoji'=>true)), array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'No active alerts at this time.'))];
+
+            $result = SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
+            if ($debug_bot) {
+              header("Content-Type: application/json");
+              print json_encode(array('response_type' => 'ephemeral', 'text' => $_POST['command'] . ' ' . $_POST['text'] . ' output response: ' . $result));
+            }
           }
         }
         break;

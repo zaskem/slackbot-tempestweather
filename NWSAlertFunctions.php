@@ -135,13 +135,19 @@
       CURLOPT_RETURNTRANSFER => true,
       CURLOPT_ENCODING => '',
       CURLOPT_MAXREDIRS => 10,
-      CURLOPT_TIMEOUT => 0,
+      CURLOPT_TIMEOUT => 3,
       CURLOPT_FOLLOWLOCATION => true,
       CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
       CURLOPT_CUSTOMREQUEST => 'GET',
     ));
     
     $response = curl_exec($curl);
+    if ($response === false) {
+      $info = curl_getinfo($curl);
+      if ($info['http_code'] === 0) {
+        $response = '{"status":"Response Timeout"}';
+      }
+    }
     curl_close($curl);
 
     return json_decode($response, true);

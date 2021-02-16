@@ -2,6 +2,7 @@
 // API DETAILS AT https://www.weather.gov/documentation/services-web-api#/
   $nwsUserAgent = "(Your WeatherBot Name, contactinfo, email@host)";
   $nwsZoneID = ""; // A given location will likely have two options (zone and county), e.g. MNZ000 / MNC000
+  $severityLevels = array(0=>'', 1=>'unknown',2=>'minor',3=>'moderate',4=>'severe',5=>'extreme');
 
   $stationMetadata = include __DIR__ . '/stationMetadata.generated.php';
   $stationLat = round($stationMetadata['latitude'], 4, PHP_ROUND_HALF_DOWN);

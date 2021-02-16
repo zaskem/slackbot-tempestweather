@@ -114,7 +114,21 @@
           $activeAlerts = count($alertData['features']);
 
           if ($activeAlerts > 0) {
-            $alert = new NWSAlert($alertData['features'][0]);
+            $useFeatureIndex = 0;
+            if ($activeAlerts > 1) {
+              // Need to obtain just the "most severe" current alert
+              $highestSeverity = 0;
+              $i = 0;
+              while ($i < $activeAlerts) {
+                $alertSeverity = array_search(strtolower($alertData['features'][$i]['properties']['severity']), $severityLevels);
+                if ($alertSeverity > $highestSeverity) {
+                  $highestSeverity = $alertSeverity;
+                  $useFeatureIndex = $i;
+                }
+                $i++;
+              }
+            }
+            $alert = new NWSAlert($alertData['features'][$useFeatureIndex]);
           } else {
             $alert = null;
           }
@@ -161,21 +175,19 @@
         } else {
           $activeAlerts = count($alertData['features']);
 
-          /*
-          if ($activeAlerts > 1) {
-            // TODO: Handle situation in which more than one alert is active at a given time
-            //  Possibly rank by the alertSeverityIndex?    
-          } else
-          */
           if ($activeAlerts > 0) {
-            $alert = new NWSAlert($alertData['features'][0]);
+            $result = '';
+            // Fire off an alert block for each item
+            foreach ($alertData['features'] as $alertFeature) {
+              $alert = new NWSAlert($alertFeature);
 
-            // Create basic text response (fallback)
-            $responseText = $alert->headline;
-            // Use blocks for prettier response
-            $slackbot_details['blocks'] = $alert->getFullAlertBlocks();
+              // Create basic text response (fallback)
+              $responseText = $alert->headline;
+              // Use blocks for prettier response
+              $slackbot_details['blocks'] = $alert->getFullAlertBlocks();
 
-            $result = SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
+              $result .= SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
+            }
             if ($debug_bot) {
               header("Content-Type: application/json");
               print json_encode(array('response_type' => 'ephemeral', 'text' => $_POST['command'] . ' ' . $_POST['text'] . ' output response: ' . $result));

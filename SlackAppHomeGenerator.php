@@ -1,6 +1,7 @@
 <?php
   require_once __DIR__ . '/config/bot.php';
   require_once __DIR__ . '/config/slack.php';
+  require_once __DIR__ . '/config/nws.php';
   require __DIR__ . '/TempestAPIFunctions.php';
   require __DIR__ . '/TempestObservation.php';
   require __DIR__ . '/NWSAlert.php';
@@ -17,7 +18,7 @@
    * @return array of block content payload
    */
   function getAppHomeBlocks($user_id) {
-    global $dividerBlock, $helpContextBlock, $botVersionBlock, $slackConditionIcons, $tempUnitLabel, $pressureUnitLabel,$windUnitLabel;
+    global $dividerBlock, $helpContextBlock, $botVersionBlock, $slackConditionIcons, $tempUnitLabel, $pressureUnitLabel, $windUnitLabel, $severityLevels;
   
     // Header Block Content
     $blks = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Tempest Weather Bot'))];
@@ -30,7 +31,21 @@
       $activeAlerts = count($alertData['features']);
 
       if ($activeAlerts > 0) {
-        $alert = new NWSAlert($alertData['features'][0]);
+        $useFeatureIndex = 0;
+        if ($activeAlerts > 1) {
+          // Need to obtain just the "most severe" current alert
+          $highestSeverity = 0;
+          $i = 0;
+          while ($i < $activeAlerts) {
+            $alertSeverity = array_search(strtolower($alertData['features'][$i]['properties']['severity']), $severityLevels);
+            if ($alertSeverity > $highestSeverity) {
+              $highestSeverity = $alertSeverity;
+              $useFeatureIndex = $i;
+            }
+            $i++;
+          }
+        }
+        $alert = new NWSAlert($alertData['features'][$useFeatureIndex]);
         $alertBlocks = $alert->getHomeBlocks();
         array_push($blks, $alertBlocks[0], $alertBlocks[1], $dividerBlock);
       }

@@ -47,7 +47,10 @@
         }
         $alert = new NWSAlert($alertData['features'][$useFeatureIndex]);
         $alertBlocks = $alert->getHomeBlocks();
-        array_push($blks, $alertBlocks[0], $alertBlocks[1], $dividerBlock);
+        foreach ($alertBlocks as $alertBlock) {
+          array_push($blks, $alertBlock);
+        }
+        array_push($blks, $dividerBlock);
       }
     }
 

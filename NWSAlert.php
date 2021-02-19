@@ -93,8 +93,7 @@ class NWSAlert {
    * @return array of Slack blocks
    */
   public function getSummaryAlertBlocks() {
-    $blocks = [array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>':warning: *' . $this->event . '* :warning:'))];
-    array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$this->alertHeadline)), array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$this->alertInstructions)));
+    $blocks = array(array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>':warning: *' . $this->event . '* :warning:')), array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$this->alertHeadline)), array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$this->alertInstructions)));
 
     return $blocks;
   }
@@ -106,8 +105,7 @@ class NWSAlert {
    * @return array of Slack blocks
    */
   public function getHomeBlocks() {
-    $blocks = [array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>':warning: *' . $this->event . '*'))];
-    array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>ucfirst($this->alertHeadline))));
+    $blocks = array(array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>':warning: *' . $this->event . '*')), array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>ucfirst($this->alertHeadline))));
 
     return $blocks;
   }

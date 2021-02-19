@@ -16,6 +16,7 @@ class TempestObservation {
   private $precipUnitLabel;
   private $distanceUnitLabel;
   private $solarRadLabel;
+  private $slackConditionIcons;
 
   /**
    * __construct override and property assignments
@@ -84,6 +85,7 @@ class TempestObservation {
     $this->precipUnitLabel = $precipUnitLabel;
     $this->distanceUnitLabel = $distanceUnitLabel;
     $this->solarRadLabel = $solarRadLabel;
+    $this->slackConditionIcons = $slackConditionIcons;
   }
 
 
@@ -268,6 +270,46 @@ class TempestObservation {
     $this->dailyPrecip = $data[$this->lastObsID][20];
     // Formatted values
     $this->f_dailyPrecip = $this->convertMmToInch($this->dailyPrecip) . $this->precipUnitLabel;
+  }
+
+
+  /**
+   * getHomeObservationBlocks() - return Slack observation blocks for the App Home Tab
+   * 
+   * @return array of Slack blocks
+   */
+  public function getHomeObservationBlocks() {
+    $blocks = array(array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Currently (' . $this->f_timestamp . '):*')), array('type'=>'section','fields'=>array(['type'=>'mrkdwn','text'=>':thermometer: ' . $this->f_temperature . ' (feels like ' . $this->f_feelsLike . ')
+        dew point ' . $this->f_dew_point . ' (humidity ' . $this->f_relative_humidity . ')'], ['type'=>'mrkdwn','text'=>':dash: ' . $this->f_windDir . ' ' . $this->f_windAvg . ' (gusting ' . $this->f_windGust . ')'])));
+
+    return $blocks;
+  }
+
+
+  /**
+   * getHome4HourBlocks() - return Slack 4-hour forecast blocks for the App Home Tab
+   * 
+   * @return array of Slack blocks
+   */
+  public function getHome4HourBlocks() {
+    include __DIR__ . '/config/bot.php';
+    $blocks = array(array('type'=>'section','fields'=>array(['type'=>'mrkdwn','text'=>'*' . $this->f_timestamp . '*: ' . $this->slackConditionIcons[$this->icon] . ' ' . $this->f_temperature . ' (feels like ' . $this->f_feelsLike . ')'],
+    ($this->precip_probability > 0) ? ['type'=>'plain_text','text'=>$this->f_precip_probability . ' chance ' . $this->f_precip_type . ' | ' . $this->f_windDir . ' ' . $this->f_windAvg . ' (gusting ' . $this->f_windGust . ')','emoji'=>true] : ['type'=>'plain_text','text'=>$this->f_windDir . ' ' . $this->f_windAvg . ' (gusting ' . $this->f_windGust . ')','emoji'=>true])));
+
+    return $blocks;
+  }
+
+
+  /**
+   * getHome5DayBlocks() - return Slack 5-day forecast blocks for the App Home Tab
+   * 
+   * @return array of Slack blocks
+   */
+  public function getHome5DayBlocks() {
+    $blocks = array(array('type'=>'section','fields'=>array(['type'=>'mrkdwn','text'=>'*' . $this->f_shortTimestamp . '*: ' . $this->slackConditionIcons[$this->icon]],['type'=>'plain_text','text'=>' high: ' . $this->f_high_temperature . ', low: ' . $this->f_low_temperature],['type'=>'plain_text','text'=>' ','emoji'=>true],
+    ($this->precip_probability > 0) ? ['type'=>'plain_text','text'=>$this->conditions . ' (' . $this->f_precip_probability . ' chance ' . $this->f_precip_type . ')','emoji'=>true] : ['type'=>'plain_text','text'=>$this->conditions,'emoji'=>true])));
+
+    return $blocks;
   }
 
 

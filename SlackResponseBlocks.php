@@ -10,6 +10,13 @@
   $dividerBlock = array('type'=>'divider');
 
 
+  /**
+   * getHelpContentBlocks($args = null) - generate help block content based on $args
+   * 
+   * $args - string identifying desired help content (null = default text)
+   * 
+   * @return array of block content payload
+   */
   function getHelpContentBlocks($args = null) {
     global $bot_name, $bot_slashcommand, $bot_historyStarts, $dividerBlock, $keywordPrivateBlock, $botVersionBlock, $botSourceHeaderBlock, $botSourceDetailBlock;
 
@@ -110,49 +117,84 @@
   }
 
 
+  /**
+   * getCurrentObservationBlocks($observation, $alert = null, $args = null) - generate current conditions block content of $observation
+   * 
+   * $observation - instance of TempestObservation
+   * $alert - instance of NWSAlert (if available)
+   * $args - currently unused
+   * 
+   * @return array of block content payload
+   */
   function getCurrentObservationBlocks($observation, $alert = null, $args = null) {
     global $helpContextBlock, $dividerBlock, $bot_slashcommand;
 
     $blocks =  [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Current conditions at ' . $observation->f_timestamp,'emoji'=>true))];
-    if (!is_null($alert)) {
-      array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>':warning: *' . $alert->event . '* :warning:')), array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$alert->alertHeadline)), array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$alert->alertInstructions)), array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>'View full alert details with `' . $bot_slashcommand . ' alerts`')]), $dividerBlock);
+
+    if (is_null($alert)) {
+      $alertBlocks = array();
+    } else {
+      $alertBlocks = $alert->getSummaryAlertBlocks();
     }
-    array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>':thermometer: Temperature: '. $observation->f_temperature . ' (feels like ' . $observation->f_feelsLike . ')')));
-    array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>':dash: Wind: ' . $observation->f_windAvg . ' from the ' . $observation->f_windDir . '.')), $dividerBlock, $helpContextBlock);
+    foreach ($alertBlocks as $alertBlock) {
+      array_push($blocks, $alertBlock);
+    }
+    array_push($blocks, $dividerBlock);
+
+    $conditionBlocks = $observation->getCurrentObservationBlocks();
+    foreach ($conditionBlocks as $conditionBlock) {
+      array_push($blocks, $conditionBlock);
+    }
+    array_push($blocks, $dividerBlock, $helpContextBlock);
 
     return $blocks;
   }
 
 
+  /**
+   * getDayForecastBlocks($observation, $args = null) - generate "day" forecast block content of $observation
+   *
+   * $observation - instance of TempestObservation
+   * $args - currently unused
+   * 
+   * @return array of block content payload
+   */
   function getDayForecastBlocks($observation, $args = null) {
     global $helpContextBlock, $dividerBlock;
 
-    $blocks = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Forecast for ' . $observation->f_timestamp,'emoji'=>true))];
-    array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$observation->conditions . ' with a high of ' . $observation->f_high_temperature . ' (low: ' . $observation->f_low_temperature . ').')));
-    if ($observation->precip_probability > 0) {
-      array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'There is a ' . $observation->f_precip_probability . ' chance of ' . $observation->f_precip_type . '.')));
-    }
-    array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'Sunrise: ' . $observation->f_sunrise . ' | Sunset: ' . $observation->f_sunset . '.')), $dividerBlock, $helpContextBlock);
+    $blocks = $observation->getDayForecastBlocks();
+    array_push($blocks, $dividerBlock, $helpContextBlock);
 
     return $blocks;
   }
 
 
+  /**
+   * getHourForecastBlocks($observation, $args = null) - generate "hour" forecast block content of $observation
+   * 
+   * $observation - instance of TempestObservation
+   * $args - currently unused
+   * 
+   * @return array of block content payload
+   */
   function getHourForecastBlocks($observation, $args = null) {
     global $helpContextBlock, $dividerBlock;
 
-    $endTimestamp = (($observation->time - time()) < 82800) ? $observation->f_timestamp : $observation->f_long_timestamp;
-    $blocks = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Forecast for ' . $endTimestamp,'emoji'=>true))];
-    array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$observation->conditions . ', ' . $observation->f_temperature . ' (feels like ' . $observation->f_feelsLike . ')')));
-    if ($observation->precip_probability > 0) {
-      array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'There is a ' . $observation->f_precip_probability . ' chance of ' . $observation->f_precip_type . '.')));
-    }
-    array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$observation->f_windDir . ' winds averaging ' . $observation->f_windAvg . '.')), $dividerBlock, $helpContextBlock);
+    $blocks = $observation->getHourForecastBlocks();
+    array_push($blocks, $dividerBlock, $helpContextBlock);
 
     return $blocks;
   }
 
 
+  /**
+   * getForecastDayRangeBlocks($observations, $args = null) - generate multiple day forecast block content for $observations
+   * 
+   * $observations - array of TempestObservation instances
+   * $args - currently unused
+   * 
+   * @return array of block content payload
+   */
   function getForecastDayRangeBlocks($observations, $args = null) {
     global $helpContextBlock, $dividerBlock, $slackConditionIcons;
 
@@ -160,12 +202,10 @@
     $blocks = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Forecast for ' . $observations[0]->f_timestamp . ' to ' . $observations[$lastObs]->f_timestamp,'emoji'=>true))];
     array_push($blocks, $dividerBlock);
     foreach ($observations as $observation) {
-      array_push($blocks, array('type'=>'header','text'=>array('type'=>'plain_text','text'=>$slackConditionIcons[$observation->icon] . ' ' . $observation->f_timestamp . ':','emoji'=>true)));
-      array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$observation->conditions . ' with a high of ' . $observation->f_high_temperature . ' (low: ' . $observation->f_low_temperature . ').')));
-      if ($observation->precip_probability > 0) {
-        array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'There is a ' . $observation->f_precip_probability . ' chance of ' . $observation->f_precip_type . '.')));
+      foreach ($observation->getDayForecastBlocks(true) as $forecastBlock) {
+        array_push($blocks, $forecastBlock);
       }
-      array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'Sunrise: ' . $observation->f_sunrise . ' | Sunset: ' . $observation->f_sunset . '.')), $dividerBlock);
+      array_push($blocks, $dividerBlock);
     }
     array_push($blocks, $helpContextBlock); 
 
@@ -173,6 +213,14 @@
   }
 
 
+  /**
+   * getForecastHourRangeBlocks($observations, $args = null) - generate multiple hour forecast block content for $observations
+   * 
+   * $observations - array of TempestObservation instances
+   * $args - currently unused
+   * 
+   * @return array of block content payload
+   */
   function getForecastHourRangeBlocks($observations, $args = null) {
     global $helpContextBlock, $dividerBlock, $slackConditionIcons;
 
@@ -183,13 +231,10 @@
     $blocks = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Forecast for ' . $observations[0]->f_timestamp . ' to ' . $endTimestamp,'emoji'=>true))];
     array_push($blocks, $dividerBlock);
     foreach ($observations as $observation) {
-      $timestamp = ($useLongTimestamp) ? $observation->f_timestamp : $observation->f_long_timestamp;
-      array_push($blocks, array('type'=>'header','text'=>array('type'=>'plain_text','text'=>$slackConditionIcons[$observation->icon] . ' ' . $timestamp . ':','emoji'=>true)));
-      array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$observation->conditions . ', ' . $observation->f_temperature . ' (feels like ' . $observation->f_feelsLike . ')')));
-      if ($observation->precip_probability > 0) {
-        array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'There is a ' . $observation->f_precip_probability . ' chance of ' . $observation->f_precip_type . '.')));
+      foreach ($observation->getHourForecastBlocks(true) as $forecastBlock) {
+        array_push($blocks, $forecastBlock);
       }
-      array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$observation->f_windDir . ' winds averaging ' . $observation->f_windAvg . '.')), $dividerBlock);
+      array_push($blocks, $dividerBlock);
     }
     array_push($blocks, $helpContextBlock); 
 
@@ -197,60 +242,36 @@
   }
 
 
+  /**
+   * getDayHistoryBlocks($observation, $args = null) - generate "day" history block content of $observation
+   * 
+   * $observation - instance of TempestObservation
+   * $args - currently unused
+   * 
+   * @return array of block content payload
+   */
   function getDayHistoryBlocks($observation, $args = null) {
     global $helpContextBlock, $dividerBlock;
 
-    $blocks = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Weather Summary for ' . $observation->f_historyDateStart,'emoji'=>true))];
-    array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Temperature:*
-    _High:_ ' . $observation->f_highTemp . $observation->f_highTempTimestamp . '
-    _Low:_ ' . $observation->f_lowTemp . $observation->f_lowTempTimestamp . '
-    _Average for the day:_ ' . $observation->f_avgTemp)), $dividerBlock);
-    array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Pressure:*
-    _High:_ ' . $observation->f_highPress . $observation->f_highPressTimestamp . '
-    _Low:_ ' . $observation->f_lowPress . $observation->f_lowPressTimestamp . '
-    _Trend for the day:_ ' . $observation->f_pressTrend)), $dividerBlock);
-    array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Sunlight/Brightness:*
-    _High UV Index:_ ' . $observation->highUV . $observation->f_highUVTimestamp . '
-    _Highest Solar Radiation:_ ' . $observation->f_highSolarRad . $observation->f_highSolarRadTimestamp . '
-    _Highest Brightness:_ ' . $observation->f_highLux . $observation->f_highLuxTimestamp)), $dividerBlock);
-    array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Wind Conditions:*
-    _High Gust:_ ' . $observation->f_highWindDir . ' ' . $observation->f_highWindGust . $observation->f_highWindTimestamp . '
-    _Average Speed:_ ' . $observation->f_windAvg)), $dividerBlock);
-    array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Precipitation and Lightning:*
-    _Daily Rainfall:_ ' . $observation->f_dailyPrecip)));
-    if ($observation->strikeCount > 0) {
-      array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'_Lightning Strikes Detected:_ ' . $observation->f_strikeCount . '
-      _Closest Lightning Strike:_ ' . $observation->f_closestStrike . $observation->f_closeStrikeTimestamp)));
-    } else {
-      array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'_No Lightning Detected_')));
-    }
+    $blocks = $observation->getDayHistoryBlocks();
     array_push($blocks, $dividerBlock, $helpContextBlock); 
 
     return $blocks;
   }
 
 
+  /**
+   * getMultiDayHistoryBlocks($observations, $args = null) - generate multiple day history block content for $observations
+   * 
+   * $observation - instance of TempestObservation
+   * $args - currently unused
+   * 
+   * @return array of block content payload
+   */
   function getMultiDayHistoryBlocks($observations, $args = null) {
     global $helpContextBlock, $dividerBlock;
 
-    $blocks = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Weather Summary for ' . $observations->f_historyDateStart . ' through ' . $observations->f_historyDateEnd,'emoji'=>true))];
-    array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Temperature:*
-    _High:_ ' . $observations->f_highTemp . $observations->f_highTempTimestamp . '
-    _Low:_ ' . $observations->f_lowTemp . $observations->f_lowTempTimestamp . '
-    _Average over the period:_ ' . $observations->f_avgTemp)), $dividerBlock);
-    array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Sunlight/Brightness:*
-    _High UV Index:_ ' . $observations->highUV . $observations->f_highUVTimestamp . '
-    _Highest Solar Radiation:_ ' . $observations->f_highSolarRad . $observations->f_highSolarRadTimestamp . '
-    _Highest Brightness:_ ' . $observations->f_highLux . $observations->f_highLuxTimestamp)), $dividerBlock);
-    array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Wind Conditions:*
-    _High Gust:_ ' . $observations->f_highWindDir . ' ' . $observations->f_highWindGust . $observations->f_highWindTimestamp . '
-    _Average Speed:_ ' . $observations->f_windAvg)), $dividerBlock);
-    if ($observations->strikeCount > 0) {
-      array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'_Lightning Strikes Detected:_ ' . $observations->f_strikeCount . '
-      _Closest Lightning Strike:_ ' . $observations->f_closestStrike . $observations->f_closeStrikeTimestamp)));
-    } else {
-      array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'_No Lightning Detected_')));
-    }
+    $blocks = $observations->getMultiDayHistoryBlocks();
     array_push($blocks, $dividerBlock, $helpContextBlock); 
 
     return $blocks;

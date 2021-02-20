@@ -313,6 +313,127 @@ class TempestObservation {
   }
 
 
+  /**
+   * getCurrentObservationBlocks() - return Slack observation blocks
+   * 
+   * @return array of Slack blocks
+   */
+  public function getCurrentObservationBlocks() {
+    $blocks = array(array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>':thermometer: Temperature: '. $this->f_temperature . ' (feels like ' . $this->f_feelsLike . ')')), array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>':dash: Wind: ' . $this->f_windAvg . ' from the ' . $this->f_windDir . '.')));
+    
+    return $blocks;
+  }
+
+
+  /**
+   * getDayForecastBlocks($multiItem = false) - return Slack "day" forecast blocks
+   * 
+   * $multiItem => used for "day range" forecast blocks; slightly different header format
+   * 
+   * @return array of Slack blocks
+   */
+  public function getDayForecastBlocks($multiItem = false) {
+    $headerText = ($multiItem) ? $this->slackConditionIcons[$this->icon] . ' ' . $this->f_timestamp . ':' : 'Forecast for ' . $this->f_timestamp;
+    $blocks = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>$headerText,'emoji'=>true)), array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$this->conditions . ' with a high of ' . $this->f_high_temperature . ' (low: ' . $this->f_low_temperature . ').'))];
+    if ($this->precip_probability > 0) {
+      array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'There is a ' . $this->f_precip_probability . ' chance of ' . $this->f_precip_type . '.')));
+    }
+    array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'Sunrise: ' . $this->f_sunrise . ' | Sunset: ' . $this->f_sunset . '.')));
+
+    return $blocks;
+  }
+
+
+  /**
+   * getHourForecastBlocks($multiItem = false) - return Slack "hour" forecast blocks
+   * 
+   * $multiItem => used for "hour range" forecast blocks; slightly different header format
+   * 
+   * @return array of Slack blocks
+   */
+  public function getHourForecastBlocks($multiItem = false) {
+    $endTimestamp = (($this->time - time()) < 82800) ? $this->f_timestamp : $this->f_long_timestamp;
+    $headerText = ($multiItem) ? $this->slackConditionIcons[$this->icon] . ' ' . $endTimestamp . ':' : 'Forecast for ' . $endTimestamp;
+
+    $blocks = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>$headerText,'emoji'=>true)), array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$this->conditions . ', ' . $this->f_temperature . ' (feels like ' . $this->f_feelsLike . ')'))];
+    if ($this->precip_probability > 0) {
+      array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'There is a ' . $this->f_precip_probability . ' chance of ' . $this->f_precip_type . '.')));
+    }
+    array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$this->f_windDir . ' winds averaging ' . $this->f_windAvg . '.')));
+
+    return $blocks;
+  }
+
+
+  /**
+   * getDayHistoryBlocks() - return Slack observation blocks
+   * 
+   * @return array of Slack blocks
+   */
+  public function getDayHistoryBlocks() {
+    $blocks = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Weather Summary for ' . $this->f_historyDateStart,'emoji'=>true)),
+    array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Temperature:*
+    _High:_ ' . $this->f_highTemp . $this->f_highTempTimestamp . '
+    _Low:_ ' . $this->f_lowTemp . $this->f_lowTempTimestamp . '
+    _Average for the day:_ ' . $this->f_avgTemp)), array('type'=>'divider'),
+    array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Pressure:*
+    _High:_ ' . $this->f_highPress . $this->f_highPressTimestamp . '
+    _Low:_ ' . $this->f_lowPress . $this->f_lowPressTimestamp . '
+    _Trend for the day:_ ' . $this->f_pressTrend)), array('type'=>'divider'),
+    array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Sunlight/Brightness:*
+    _High UV Index:_ ' . $this->highUV . $this->f_highUVTimestamp . '
+    _Highest Solar Radiation:_ ' . $this->f_highSolarRad . $this->f_highSolarRadTimestamp . '
+    _Highest Brightness:_ ' . $this->f_highLux . $this->f_highLuxTimestamp)),
+    array('type'=>'divider'),
+    array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Wind Conditions:*
+    _High Gust:_ ' . $this->f_highWindDir . ' ' . $this->f_highWindGust . $this->f_highWindTimestamp . '
+    _Average Speed:_ ' . $this->f_windAvg)),
+    array('type'=>'divider'),
+    array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Precipitation and Lightning:*
+    _Daily Rainfall:_ ' . $this->f_dailyPrecip))];
+    if ($this->strikeCount > 0) {
+      array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'_Lightning Strikes Detected:_ ' . $this->f_strikeCount . '
+      _Closest Lightning Strike:_ ' . $this->f_closestStrike . $this->f_closeStrikeTimestamp)));
+    } else {
+      array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'_No Lightning Detected_')));
+    }
+    
+    return $blocks;
+  }
+
+
+  /**
+   * getMultiDayHistoryBlocks() - return Slack observation blocks
+   * 
+   * @return array of Slack blocks
+   */
+  public function getMultiDayHistoryBlocks() {
+    $blocks = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Weather Summary for ' . $this->f_historyDateStart . ' through ' . $this->f_historyDateEnd,'emoji'=>true)),
+    array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Temperature:*
+    _High:_ ' . $this->f_highTemp . $this->f_highTempTimestamp . '
+    _Low:_ ' . $this->f_lowTemp . $this->f_lowTempTimestamp . '
+    _Average over the period:_ ' . $this->f_avgTemp)),
+    array('type'=>'divider'),
+    array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Sunlight/Brightness:*
+    _High UV Index:_ ' . $this->highUV . $this->f_highUVTimestamp . '
+    _Highest Solar Radiation:_ ' . $this->f_highSolarRad . $this->f_highSolarRadTimestamp . '
+    _Highest Brightness:_ ' . $this->f_highLux . $this->f_highLuxTimestamp)),
+    array('type'=>'divider'),
+    array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Wind Conditions:*
+    _High Gust:_ ' . $this->f_highWindDir . ' ' . $this->f_highWindGust . $this->f_highWindTimestamp . '
+    _Average Speed:_ ' . $this->f_windAvg)),
+    array('type'=>'divider')];
+    if ($this->strikeCount > 0) {
+      array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'_Lightning Strikes Detected:_ ' . $this->f_strikeCount . '
+      _Closest Lightning Strike:_ ' . $this->f_closestStrike . $this->f_closeStrikeTimestamp)));
+    } else {
+      array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'_No Lightning Detected_')));
+    }
+    
+    return $blocks;
+  }
+
+
   // Utility Functions
   /**
    * min_mod() function modification to ignore "null" values, sourced from https://www.php.net/manual/en/function.min.php

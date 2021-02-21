@@ -46,15 +46,16 @@
           )
         ));
         array_push($blocks, array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>'When providing a numeric request (e.g. `X hours`) the _hour-specific_ forecast will be returned based on the request time. However, an `X days` request made at 5 p.m. will return the _daily_ forecast for `X` days from now.')]), $dividerBlock);
-        array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'Relative keywords (`tomorrow`, `next`, and weekday names) can also be used:')));
+        array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'Relative keywords (`today`, `tomorrow`, `next`, and weekday names) can also be used:')));
         array_push($blocks, array('type'=>'section','fields'=>
-          array(['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' tomorrow`'],['type'=>'mrkdwn','text'=>'Display forecast for tomorrow'],
+          array(['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' today forecast`'],['type'=>'mrkdwn','text'=>'Display forecast for the current day'],
+          ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' tomorrow`'],['type'=>'mrkdwn','text'=>'Display forecast for tomorrow'],
           ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' Tuesday`'],['type'=>'mrkdwn','text'=>'Display forecast for Tuesday'],
           ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' next 24 hours`'],['type'=>'mrkdwn','text'=>'Display forecasts for the next 24 hours'],
             ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' next 10 days`'],['type'=>'mrkdwn','text'=>'Display forecasts for the next 10 days']
           )
         ));
-        array_push($blocks, array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>'When providing a numeric relative request (e.g. `next X [hours/days/week]`) `X` must fall in the ranges identified above. Relative `day` and `week` requests will return daily forecasts for the period. Relative `hour` forecasts will generate dynamically-appropriate intervals for the period, generally not to exceed 10 individual forecasts per request.')]), $dividerBlock, $keywordPrivateBlock, $dividerBlock, $botVersionBlock);
+        array_push($blocks, array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>'When providing a numeric relative request (e.g. `next X [hours/days/week]`) `X` must fall in the ranges identified above. Relative `day` and `week` requests will return daily forecasts for the period. Relative `hour` forecasts will generate dynamically-appropriate intervals for the period, generally not to exceed 10 individual forecasts per request.')]), array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>'The relative request `today` _without_ additional argument, when invoked before 4 p.m., will display the day’s forecast; after 4 p.m. will display the day’s history.')]), $dividerBlock, $keywordPrivateBlock, $dividerBlock, $botVersionBlock);
         break;
 
       case 'history':
@@ -62,20 +63,21 @@
         array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'The ' . $bot_name . ' can respond with daily station history summaries _on or *after*_ ' . date('F j, Y', strtotime($bot_historyStarts)) . '.')), $dividerBlock);
         array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'Specify a specific date or date range. `dateString` should be in `YYYY-MM-DD` or `DD-MM-YYYY` format:')));
         array_push($blocks, array('type'=>'section','fields'=>
-          array(['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' X hour/day/week/month[s]`'],['type'=>'mrkdwn','text'=>'X is a *negative* number within range. Display summary for the matching date'],
+          array(['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' X hour[s]/day[s]/week[s]/month[s]`'],['type'=>'mrkdwn','text'=>'X is a *negative* number within range. Display summary for the matching date'],
             ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' dateString`'],['type'=>'mrkdwn','text'=>'Display summary for the matching date'],
             ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' dateString to dateString`'],['type'=>'mrkdwn','text'=>'Display summary for the submitted period']
           )
         ), $dividerBlock);
         array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'Relative keywords (`today`, `yesterday`, `last`, and `this`) can also be used:')));
         array_push($blocks, array('type'=>'section','fields'=>
-          array(['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' today`'],['type'=>'mrkdwn','text'=>'Display daily summary for yesterday'],
+          array(['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' today history`'],['type'=>'mrkdwn','text'=>'Display summary for the current day'],
             ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' yesterday`'],['type'=>'mrkdwn','text'=>'Display daily summary for yesterday'],
+            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' last X hour[s]/day[s]`'],['type'=>'mrkdwn','text'=>'Display summary for the previous X hour/day period'],
             ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' last week/month/year`'],['type'=>'mrkdwn','text'=>'Display summary for the requested period'],
             ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' this week/month/year`'],['type'=>'mrkdwn','text'=>'Display summary for the requested period (through the current day).']
           )
         ));
-        array_push($blocks, array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>'Note: `week`s are relative to Mondays.')]), $dividerBlock, $keywordPrivateBlock, $dividerBlock, $botVersionBlock);
+        array_push($blocks, array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>'The relative request `today` _without_ additional argument, when invoked before 4 p.m., will display the day’s forecast; after 4 p.m. will display the day’s history.')]), array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>'Note: `week`s are relative to Mondays.')]), $dividerBlock, $keywordPrivateBlock, $dividerBlock, $botVersionBlock);
         break;
 
       default:
@@ -96,7 +98,7 @@
           )
         ));
         array_push($blocks, array('type'=>'section','fields'=>
-          array(['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' today`'],['type'=>'mrkdwn','text'=>'Display summary for today'],
+          array(['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' today`'],['type'=>'mrkdwn','text'=>'Display forecast or summary for today'],
             ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' yesterday`'],['type'=>'mrkdwn','text'=>'Display summary for yesterday'],
             ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' last month`'],['type'=>'mrkdwn','text'=>'Display summary for last month']
           )

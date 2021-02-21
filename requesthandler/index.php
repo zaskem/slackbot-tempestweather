@@ -86,10 +86,19 @@
     } else if (((("last" == trim($parsedArgs[0])) || ("this" == trim($parsedArgs[0]))) && (("week" == trim($parsedArgs[1])) || ("month" == trim($parsedArgs[1])) || ("year" == trim($parsedArgs[1])))) || (strpos($commandArgs, ' to ') !== false)) {
       // Does the command match any of the 'history range' keyword patterns?
       $natureOfRequest = 'historyrange';
+    } else if (("last" == trim($parsedArgs[0])) && (("hours" == trim($parsedArgs[2])) || ("hour" == trim($parsedArgs[2])) || ("days" == trim($parsedArgs[2])) || ("day" == trim($parsedArgs[2])))) {
+      // Does the command match any of the relative 'history range' keyword patterns (e.g. 'last 2 days' or 'last 4 hours')?
+      $natureOfRequest = 'historyrange';
+    } else if ("today" == trim($parsedArgs[0])) {
+      // Is the argument 'today'?
+      $natureOfRequest = 'today';
+    } else if ((strtotime($commandArgs) < time()) && (("hours" == trim($parsedArgs[1])) || ("hour" == trim($parsedArgs[1])))) {
+      // Is the argument a negative (history) with _hour_ declaration?
+      $natureOfRequest = 'hourhistory';
     } else if (("yesterday" == trim($parsedArgs[0])) || (strtotime($commandArgs) < time())) {
       // Is the argument 'yesterday' or negative (history)?
       $natureOfRequest = 'dayhistory';
-   } else {
+    } else {
       // Assume a forecast otherwise
       $natureOfRequest = 'forecast';
     }
@@ -281,7 +290,6 @@
             $responseText = "The forecast for " . $dayForecasts[$lastForecast]->f_timestamp . ": " . $dayForecasts[$lastForecast]->conditions . " with a high of " . $dayForecasts[$lastForecast]->f_high_temperature . " (low: " . $dayForecasts[$lastForecast]->f_low_temperature . ").";
             if ($dayForecasts[$lastForecast]->precip_probability > 0) { $responseText .= " There's a " . $dayForecasts[$lastForecast]->f_precip_probability . " chance of " . $dayForecasts[$lastForecast]->f_precip_type . "."; }
             $responseText .= " Sunrise: " . $dayForecasts[$lastForecast]->f_sunrise . " | Sunset: " . $dayForecasts[$lastForecast]->f_sunset;
-
             // Use blocks for prettier and complete response
             $slackbot_details['blocks'] = getForecastDayRangeBlocks($dayForecasts);
 
@@ -308,7 +316,6 @@
             $responseText = "The forecast for " . $hourForecasts[$lastForecast]->f_timestamp . ": " . $hourForecasts[$lastForecast]->f_temperature . " (feels like " . $hourForecasts[$lastForecast]->f_feelsLike . ")";
             if ($hourForecasts[$lastForecast]->precip_probability > 0) { $responseText .= " with a " . $hourForecasts[$lastForecast]->f_precip_probability . " chance of " . $hourForecasts[$lastForecast]->f_precip_type . ". "; }
             $responseText .= $hourForecasts[$lastForecast]->f_windDir . " winds averaging " . $hourForecasts[$lastForecast]->f_windAvg . ".";
-
             // Use blocks for prettier response
             $slackbot_details['blocks'] = getForecastHourRangeBlocks($hourForecasts);
 
@@ -331,6 +338,17 @@
         // Parse out and translate the supported statements
         $historyArgs = explode(' ', $commandArgs);
         if ("last" == trim($historyArgs[0])) {
+          // "last" X [hour/hours/day/days]
+          if (("hour" == trim($historyArgs[2])) || ("hours" == trim($historyArgs[2]))) {
+            // Relative to now
+            $startRange = strtotime('-' . $historyArgs[1] . ' ' . $historyArgs[2]);
+            $endRange = time();
+          }
+          if (("day" == trim($historyArgs[2])) || ("days" == trim($historyArgs[2]))) {
+            $startRange = strtotime('midnight -' . $historyArgs[1] . ' ' . $historyArgs[2]);
+            $endRange = strtotime('midnight') - 60;            
+          }
+
           // "last" [week/month/year]
           if ("week" == trim($historyArgs[1])) {
             // Relative to now
@@ -407,6 +425,94 @@
           $responseText = "During the period of $observations->f_historyDateStart to $observations->f_historyDateEnd, the high temperature was $observations->f_highTemp with a low of $observations->f_lowTemp. The average temperature for the period was $observations->f_avgTemp. A high wind gust of $observations->f_highWindGust was observed $observations->f_highWindTimestamp.";
           // Use blocks for prettier response
           $slackbot_details['blocks'] = getMultiDayHistoryBlocks($observations);
+
+          $result = SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
+          if ($debug_bot) {
+            header("Content-Type: application/json");
+            print json_encode(array('response_type' => 'ephemeral', 'text' => $_POST['command'] . ' ' . $_POST['text'] . ' output response: ' . $result));
+          }
+        }
+        break;
+      // The dynamic/changing relative nature of "today"
+      case 'today':
+        $validArgs = array('history','forecast');
+        // Dynamically change output based on current time
+        if (strtotime('16:00') < time()) {
+          // After 4 p.m. display day history
+          $display = 'history';
+        } else {
+          // Before 4 p.m. display day forecast
+          $display = 'forecast';
+        }
+    
+        // Adjust if/as necessary based on any supplied arguments
+        $todayArgs = explode(' ', $commandArgs);
+        if (isset($todayArgs[1])) {
+          if (in_array(trim($todayArgs[1]), $validArgs)) {
+            // Use the desired output of the user
+            $display = trim($todayArgs[1]);
+          }
+        }
+
+        switch ($display) {
+          case 'forecast':
+            getStationForecast();
+            $stationForecast = include $botCodePath . '/config/stationForecast.generated.php';
+            $observation = new TempestObservation('day_forecast', $stationForecast['forecast']['daily'][0]);
+
+            $slackbot_details['icon_emoji'] = $slackConditionIcons[$observation->icon];
+            // Create basic text response (fallback)
+            $responseText = "The forecast for $observation->f_timestamp: $observation->conditions with a high of $observation->f_high_temperature (low: $observation->f_low_temperature).";
+            if ($observation->precip_probability> 0) { $responseText .= " There's a $observation->f_precip_probability chance of $observation->f_precip_type."; }
+            $responseText .= " Sunrise: $observation->f_sunrise | Sunset: $observation->f_sunset.";
+            // Use blocks for prettier response
+            $slackbot_details['blocks'] = getDayForecastBlocks($observation);
+  
+            break;
+          case 'history':
+            $slackbot_details['icon_emoji'] = ':book:';
+
+            $rawObservationData = getStationObservationsByDay(date('Y-m-d', strtotime($todayArgs[0])), false);
+            $observation = new TempestObservation('history', $rawObservationData['obs']);
+            
+            // Create basic text response (fallback)
+            $responseText = "Thus far, on $observation->f_shortHistoryDateStart, the highest and lowest recorded temperatures were $observation->f_highTemp and $observation->f_lowTemp, respectively. The average temperature for the day so far is $observation->f_avgTemp. A high wind gust of $observation->f_highWindGust was observed $observation->f_highWindTimestamp.";
+            // Use blocks for prettier response
+            $slackbot_details['blocks'] = getDayHistoryBlocks($observation);
+  
+            break;
+          default:
+            header("Content-Type: application/json");
+            $response = array('response_type' => 'ephemeral', 'text' => "`$_POST[text]` did not match a valid command format of this bot. Bot help is availble with the `$bot_slashcommand help` command.");
+            print json_encode($response);
+            die();
+            break;
+        }
+
+        $result = SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
+        if ($debug_bot) {
+          header("Content-Type: application/json");
+          print json_encode(array('response_type' => 'ephemeral', 'text' => $_POST['command'] . ' ' . $_POST['text'] . ' output response: ' . $result));
+        }
+        break;
+      // Single hour history summary (+/- 30 minutes surrounding request time)
+      case 'hourhistory':
+        if ((strtotime($commandArgs) - 1800) < strtotime($bot_historyStarts)) {
+          // A pre-historic request; fail kindly.
+          header("Content-Type: application/json");
+          $response = array('response_type' => 'ephemeral', 'text' => "`$_POST[text]` is before this bot's history start date of $bot_historyStarts. Try again with a more current range. Bot help is availble with the `$bot_slashcommand help` command.");
+          print json_encode($response);
+          die();
+        } else {
+          $slackbot_details['icon_emoji'] = ':book:';
+          $timestamp = floor(strtotime($commandArgs) / 60) * 60;
+          getStationObservationsByRange($timestamp - 1800, $timestamp + 1800);
+          $observation = new TempestObservation('history', json_decode(file_get_contents($tempestStationHistoryPath . 'stationHistory.generated.json'), true)['obs']);
+          
+          // Create basic text response (fallback)
+          $responseText = "For the hour including $observation->f_hourHistoryDateRequested, the temperature range was $observation->f_lowTemp (low) to $observation->f_highTemp (high), averaging $observation->f_avgTemp. Wind averaged $observation->f_windAvg with a high wind gust of $observation->f_highWindGust$observation->f_highWindTimestamp.";
+          // Use blocks for prettier response
+          $slackbot_details['blocks'] = getHourHistoryBlocks($observation);
 
           $result = SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
           if ($debug_bot) {
@@ -509,7 +615,6 @@
             $responseText = "The forecast for $observation->f_timestamp: $observation->conditions with a high of $observation->f_high_temperature (low: $observation->f_low_temperature).";
             if ($observation->precip_probability> 0) { $responseText .= " There's a $observation->f_precip_probability chance of $observation->f_precip_type."; }
             $responseText .= " Sunrise: $observation->f_sunrise | Sunset: $observation->f_sunset.";
-
             // Use blocks for prettier response
             $slackbot_details['blocks'] = getDayForecastBlocks($observation);
             
@@ -527,7 +632,6 @@
             $responseText = "The forecast for $observation->f_timestamp: $observation->f_temperature (feels like $observation->f_feelsLike)";
             if ($observation->precip_probability > 0) { $responseText .= " with a $observation->f_precip_probability chance of $observation->f_precip_type"; }
             $responseText .= ". $observation->f_windDir winds averaging $observation->f_windAvg.";
-
             // Use blocks for prettier response
             $slackbot_details['blocks'] = getHourForecastBlocks($observation);
 
@@ -548,7 +652,7 @@
       // Handle anything else with an error
       default:
         header("Content-Type: application/json");
-        $response = array('response_type' => 'ephemeral', 'text' => "`$_POST[text]` is not a valid command for this bot. Bot help is availble with the `$bot_slashcommand help` command.");
+        $response = array('response_type' => 'ephemeral', 'text' => "`$_POST[text]` did not match a valid command format of this bot. Bot help is availble with the `$bot_slashcommand help` command.");
         print json_encode($response);
         die();
         break;

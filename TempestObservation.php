@@ -170,13 +170,19 @@ class TempestObservation {
   private function summarizeHistoryData($data) {
     // CREATE CALCULATED VALUES
     $this->totalObs = count($data);
-    $this->lastObsID = count($data)-1;
+    $this->lastObsID = count($data) - 1;
+    $this->midpointObsID = floor($this->totalObs / 2);
     $this->timeDiff = $data[$this->lastObsID][0] - $data[0][0];
     $this->pressDiff = $data[0][6] - $data[$this->lastObsID][6];
     
     // TIME & TIMESTAMPS
     $this->f_historyDateStart = ($this->timeDiff < 86400) ? date('l, F j, g:i a', $data[0][0]) : date('l, F j', $data[0][0]);
+    $this->f_longHistoryDateStart = date('l, F j, g:i a', $data[0][0]);
+    $this->f_shortHistoryDateStart = date('l, F j', $data[0][0]);
+    $this->f_hourHistoryDateRequested = date('l, F j, g:i a', $data[$this->midpointObsID][0]);
     $this->f_historyDateEnd = ($this->timeDiff < 86400) ? date('l, F j, g:i a', $data[$this->lastObsID][0]) : date('l, F j', $data[$this->lastObsID][0]);
+    $this->f_longHistoryDateEnd = date('l, F j, g:i a', $data[$this->lastObsID][0]);
+    $this->f_shortHistoryDateEnd = date('l, F j', $data[$this->lastObsID][0]);
 
     // WIND
     // Reference values
@@ -366,12 +372,49 @@ class TempestObservation {
 
 
   /**
+   * getHourHistoryBlocks() - return Slack observation blocks
+   * 
+   * @return array of Slack blocks
+   */
+  public function getHourHistoryBlocks() {
+    $blocks = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Hour Summary for ' . $this->f_hourHistoryDateRequested,'emoji'=>true)),
+    array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'Data for ' . $this->f_historyDateStart . ' to ' . $this->f_historyDateEnd . ':')),
+    array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Temperature:*
+    _High:_ ' . $this->f_highTemp . $this->f_highTempTimestamp . '
+    _Low:_ ' . $this->f_lowTemp . $this->f_lowTempTimestamp . '
+    _Average for the hour:_ ' . $this->f_avgTemp)), array('type'=>'divider'),
+    array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Pressure:*
+    _High:_ ' . $this->f_highPress . $this->f_highPressTimestamp . '
+    _Low:_ ' . $this->f_lowPress . $this->f_lowPressTimestamp)), array('type'=>'divider')];
+    if ($this->f_highLux > 0) {
+      array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Sunlight/Brightness:*
+    _High UV Index:_ ' . $this->highUV . $this->f_highUVTimestamp . '
+    _Highest Solar Radiation:_ ' . $this->f_highSolarRad . $this->f_highSolarRadTimestamp . '
+    _Highest Brightness:_ ' . $this->f_highLux . $this->f_highLuxTimestamp)),
+    array('type'=>'divider'));
+    }
+    array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Wind Conditions:*
+    _High Gust:_ ' . $this->f_highWindDir . ' ' . $this->f_highWindGust . $this->f_highWindTimestamp . '
+    _Average Speed:_ ' . $this->f_windAvg)),
+    array('type'=>'divider'));
+    if ($this->strikeCount > 0) {
+      array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Lightning Strikes Detected:* ' . $this->f_strikeCount . '
+      _Closest Lightning Strike:_ ' . $this->f_closestStrike . $this->f_closeStrikeTimestamp)));
+    } else {
+      array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Lightning:* _No Lightning Detected_')));
+    }
+    
+    return $blocks;
+  }
+
+
+  /**
    * getDayHistoryBlocks() - return Slack observation blocks
    * 
    * @return array of Slack blocks
    */
   public function getDayHistoryBlocks() {
-    $blocks = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Weather Summary for ' . $this->f_historyDateStart,'emoji'=>true)),
+    $blocks = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Weather Summary for ' . $this->f_shortHistoryDateStart,'emoji'=>true)),
     array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Temperature:*
     _High:_ ' . $this->f_highTemp . $this->f_highTempTimestamp . '
     _Low:_ ' . $this->f_lowTemp . $this->f_lowTempTimestamp . '

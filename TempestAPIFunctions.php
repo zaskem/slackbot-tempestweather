@@ -105,16 +105,17 @@
   }
 
   /**
-   * getStationObservationsByDay($date) - Grab the specified Tempest station's observations for the $date submitted (00:00:00 - 23:59:00)
+   * getStationObservationsByDay($date, $toFile = true) - Grab the specified Tempest station's observations for the $date submitted (00:00:00 - 23:59:00)
    * 
    * $date should be of format 'YYYY-MM-DD' to behave as designed; will likely report wonky results otherwise
    * 
    * Data resolution will _generally_ be 1 minute; however, Daylight Saving Time changes, specifically the "Fall" change, can cause a 1-day
    *  resolution change (to 5 minute) due to the additional "hour" worth of data in the range (pushing the total range > 24 hours).
    * 
-   * Writes JSON file to $tempestStationHistoryPath
+   * Writes JSON file to $tempestStationHistoryPath if $toFile == true (default behavior)
+   * @return array of observations if $toFile == false
    */
-  function getStationObservationsByDay($date) {
+  function getStationObservationsByDay($date, $toFile = true) {
     global $tempestObservationsUrl, $tempestStationHistoryPath;
 
 
@@ -136,7 +137,11 @@
     // should check some status stuff here to see if request was good...
     
     // Write out our station data
-    file_put_contents($tempestStationHistoryPath . $date . '.json', $json);
+    if ($toFile) {
+      file_put_contents($tempestStationHistoryPath . $date . '.json', $json);
+    } else {
+      return $stationObservations;
+    }
   }
 
   /**

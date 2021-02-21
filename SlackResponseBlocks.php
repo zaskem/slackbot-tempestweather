@@ -243,6 +243,24 @@
 
 
   /**
+   * getHourHistoryBlocks($observation, $args = null) - generate "hour" history block content of $observation
+   * 
+   * $observation - instance of TempestObservation
+   * $args - currently unused
+   * 
+   * @return array of block content payload
+   */
+  function getHourHistoryBlocks($observation, $args = null) {
+    global $helpContextBlock, $dividerBlock;
+
+    $blocks = $observation->getHourHistoryBlocks();
+    array_push($blocks, $dividerBlock, $helpContextBlock); 
+
+    return $blocks;
+  }
+
+
+  /**
    * getDayHistoryBlocks($observation, $args = null) - generate "day" history block content of $observation
    * 
    * $observation - instance of TempestObservation

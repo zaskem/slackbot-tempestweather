@@ -74,7 +74,7 @@
             ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' yesterday`'],['type'=>'mrkdwn','text'=>'Display daily summary for yesterday'],
             ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' last X hour[s]/day[s]`'],['type'=>'mrkdwn','text'=>'Display summary for the previous X hour/day period'],
             ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' last week/month/year`'],['type'=>'mrkdwn','text'=>'Display summary for the requested period'],
-            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' this week/month/year`'],['type'=>'mrkdwn','text'=>'Display summary for the requested period (through the current day).']
+            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' this week/month/year`'],['type'=>'mrkdwn','text'=>'Display summary for the requested period (through the current day)']
           )
         ));
         array_push($blocks, array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>'The relative request `today` _without_ additional argument, when invoked before 4 p.m., will display the day’s forecast; after 4 p.m. will display the day’s history.')]), array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>'Note: `week`s are relative to Mondays.')]), $dividerBlock, $keywordPrivateBlock, $dividerBlock, $botVersionBlock);

@@ -14,7 +14,7 @@ Example commands (e.g. `/weather [argument]`)
 | `/weather 85 hours` | Display the forecast 85 hours from now |
 | `/weather 3 days` | Display the forecast three days from now |
 | `/weather next 5 days` | Display the five-day forecast |
-| `/weather today` | Display summary for today |
+| `/weather today` | Display forecast or summary for today |
 | `/weather yesterday` | Display summary for yesterday |
 | `/weather last month` | Display summary for last month |
 
@@ -57,16 +57,19 @@ The Tempest WeatherBot can respond to forecast inquiries _up to 10 days_ from th
 
 When providing a numeric request (e.g. `X hours`) the _hour-specific_ forecast will be returned based on the request time. However, an `X days` request made at 5 p.m. will return the _daily_ forecast for `X` days from now.
 
-**Relative keywords** (`tomorrow`, `next`, and weekday names) can also be used:
+**Relative keywords** (`today`, `tomorrow`, `next`, and weekday names) can also be used:
 
 | Command | Description |
 |---|---|
+| `/weather today forecast` | Display forecast for the current day |
 | `/weather tomorrow` | Display forecast for tomorrow |
 | `/weather Tuesday` | Display forecast for Tuesday |
 | `/weather next 24 hours` | Display forecasts for the next 24 hours |
 | `/weather next 10 days` | Display forecasts for the next 10 days |
 
 When providing a numeric relative request (e.g. `next X [hours/days/week]`) `X` must fall in the ranges identified above. Relative `day` and `week` requests will return daily forecasts for the period. Relative `hour` forecasts will generate dynamically-appropriate intervals for the period, generally not to exceed 10 individual forecasts per request.
+
+The relative request `today` _without_ additional argument, when invoked before 4 p.m., will display the day's forecast; after 4 p.m. will display the day's history.
 
 ---
 ## History Commands and Range
@@ -76,7 +79,7 @@ Specify a specific date or date range. `dateString` should be in `YYYY-MM-DD` or
 
 | Command | Argument Range |
 |---|---|
-| `/weather X hour/day/week/month[s]` | X is a **negative** number within range. Display summary for the matching date |
+| `/weather X hour[s]/day[s]/week[s]/month[s]` | X is a **negative** number within range. Display summary for the matching date |
 | `/weather dateString` | Display summary for the matching date |
 | `/weather dateString to dateString` | Display summary for the submitted period |
 
@@ -84,10 +87,14 @@ Specify a specific date or date range. `dateString` should be in `YYYY-MM-DD` or
 
 | Command | Description |
 |---|---|
-| `/weather today` | Display daily summary for yesterday |
+| `/weather today history` | Display summary for the current day |
 | `/weather yesterday` | Display daily summary for yesterday |
+| `/weather last 4 hour[s]` | Display summary for the previous 4 hour period |
+| `/weather last 2 day[s]` | Display summary for the previous 2 day period |
 | `/weather last week/month/year` | Display summary for the requested period |
 | `/weather this week/month/year` | Display summary for the requested period (through the current day). |
+
+The relative request `today` _without_ additional argument, when invoked before 4 p.m., will display the day's forecast; after 4 p.m. will display the day's history.
 
 Note: `week`s are relative to Mondays.
 

@@ -31,7 +31,7 @@ class NWSAlert {
     } else {
       $this->alertHeadlines = array($this->alertHeadline);
     }
-    $this->alertInstructions = $this->reformatNWSTextBlocks($this->instruction);
+    $this->alertInstructions = (strlen($this->instruction) > 0) ? $this->reformatNWSTextBlocks($this->instruction) : " ";
   }
 
 
@@ -93,6 +93,8 @@ class NWSAlert {
    * @return array of Slack blocks
    */
   public function getSummaryAlertBlocks() {
+    global $bot_slashcommand;
+
     $blocks = array(array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>':warning: *' . $this->event . '* :warning:')), array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$this->alertHeadline)), array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$this->alertInstructions)), array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>'View full alert details with `' . $bot_slashcommand . ' alerts`')]));
 
     return $blocks;

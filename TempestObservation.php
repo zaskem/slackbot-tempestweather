@@ -301,7 +301,7 @@ class TempestObservation {
    */
   public function getHome4HourBlocks() {
     include __DIR__ . '/config/bot.php';
-    $temperatureText = (($this->convertCToF($this->air_temperature) > 50) && ($this->convertCToF($this->air_temperature) < 80)) ? $this->f_temperature : $this->f_temperature . ' (feels like ' . $this->f_feelsLike . ')';
+    $temperatureText = (($this->air_temperature > 50) && ($this->air_temperature < 80)) ? $this->f_temperature : $this->f_temperature . ' (feels like ' . $this->f_feelsLike . ')';
 
     $blocks = array(array('type'=>'section','fields'=>array(['type'=>'mrkdwn','text'=>'*' . $this->f_timestamp . '*: ' . $this->slackConditionIcons[$this->icon] . ' ' . $temperatureText],
     ($this->precip_probability > 0) ? ['type'=>'plain_text','text'=>$this->f_precip_probability . ' chance ' . $this->f_precip_type . ' | ' . $this->f_windDir . ' ' . $this->f_windAvg . ' (gusting ' . $this->f_windGust . ')','emoji'=>true] : ['type'=>'plain_text','text'=>$this->f_windDir . ' ' . $this->f_windAvg . ' (gusting ' . $this->f_windGust . ')','emoji'=>true])));

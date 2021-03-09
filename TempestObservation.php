@@ -285,7 +285,9 @@ class TempestObservation {
    * @return array of Slack blocks
    */
   public function getHomeObservationBlocks() {
-    $blocks = array(array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Currently (' . $this->f_timestamp . '):*')), array('type'=>'section','fields'=>array(['type'=>'mrkdwn','text'=>':thermometer: ' . $this->f_temperature . ' (feels like ' . $this->f_feelsLike . ')
+    $temperatureText = (($this->convertCToF($this->air_temperature) > 50) && ($this->convertCToF($this->air_temperature) < 80)) ? $this->f_temperature : $this->f_temperature . ' (feels like ' . $this->f_feelsLike . ')';
+
+    $blocks = array(array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Currently (' . $this->f_timestamp . '):*')), array('type'=>'section','fields'=>array(['type'=>'mrkdwn','text'=>':thermometer: ' . $temperatureText . '
         dew point ' . $this->f_dew_point . ' (humidity ' . $this->f_relative_humidity . ')'], ['type'=>'mrkdwn','text'=>':dash: ' . $this->f_windDir . ' ' . $this->f_windAvg . ' (gusting ' . $this->f_windGust . ')'])));
 
     return $blocks;
@@ -299,7 +301,9 @@ class TempestObservation {
    */
   public function getHome4HourBlocks() {
     include __DIR__ . '/config/bot.php';
-    $blocks = array(array('type'=>'section','fields'=>array(['type'=>'mrkdwn','text'=>'*' . $this->f_timestamp . '*: ' . $this->slackConditionIcons[$this->icon] . ' ' . $this->f_temperature . ' (feels like ' . $this->f_feelsLike . ')'],
+    $temperatureText = (($this->convertCToF($this->air_temperature) > 50) && ($this->convertCToF($this->air_temperature) < 80)) ? $this->f_temperature : $this->f_temperature . ' (feels like ' . $this->f_feelsLike . ')';
+
+    $blocks = array(array('type'=>'section','fields'=>array(['type'=>'mrkdwn','text'=>'*' . $this->f_timestamp . '*: ' . $this->slackConditionIcons[$this->icon] . ' ' . $temperatureText],
     ($this->precip_probability > 0) ? ['type'=>'plain_text','text'=>$this->f_precip_probability . ' chance ' . $this->f_precip_type . ' | ' . $this->f_windDir . ' ' . $this->f_windAvg . ' (gusting ' . $this->f_windGust . ')','emoji'=>true] : ['type'=>'plain_text','text'=>$this->f_windDir . ' ' . $this->f_windAvg . ' (gusting ' . $this->f_windGust . ')','emoji'=>true])));
 
     return $blocks;
@@ -325,7 +329,9 @@ class TempestObservation {
    * @return array of Slack blocks
    */
   public function getCurrentObservationBlocks() {
-    $blocks = array(array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>':thermometer: Temperature: '. $this->f_temperature . ' (feels like ' . $this->f_feelsLike . ')')), array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>':dash: Wind: ' . $this->f_windAvg . ' from the ' . $this->f_windDir . '.')));
+    $temperatureText = (($this->convertCToF($this->air_temperature) > 50) && ($this->convertCToF($this->air_temperature) < 80)) ? $this->f_temperature : $this->f_temperature . ' (feels like ' . $this->f_feelsLike . ')';
+
+    $blocks = array(array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>':thermometer: Temperature: '. $temperatureText)), array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>':dash: Wind: ' . $this->f_windAvg . ' from the ' . $this->f_windDir . '.')));
     
     return $blocks;
   }
@@ -360,8 +366,9 @@ class TempestObservation {
   public function getHourForecastBlocks($multiItem = false) {
     $endTimestamp = (($this->time - time()) < 82800) ? $this->f_timestamp : $this->f_long_timestamp;
     $headerText = ($multiItem) ? $this->slackConditionIcons[$this->icon] . ' ' . $endTimestamp . ':' : 'Forecast for ' . $endTimestamp;
+    $temperatureText = (($this->air_temperature > 50) && ($this->air_temperature < 80)) ? $this->f_temperature : $this->f_temperature . ' (feels like ' . $this->f_feelsLike . ')';
 
-    $blocks = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>$headerText,'emoji'=>true)), array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$this->conditions . ', ' . $this->f_temperature . ' (feels like ' . $this->f_feelsLike . ')'))];
+    $blocks = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>$headerText,'emoji'=>true)), array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>$this->conditions . ', ' . $temperatureText))];
     if ($this->precip_probability > 0) {
       array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'There is a ' . $this->f_precip_probability . ' chance of ' . $this->f_precip_type . '.')));
     }

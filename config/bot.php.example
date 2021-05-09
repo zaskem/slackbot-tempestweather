@@ -12,7 +12,7 @@
   $bot_historyStarts = '2010-01-01';
 
   // Version vanity string and debug flag
-  $bot_version = '2021-02-20';
+  $bot_version = '2021-05-09';
   $debug_bot = false;
 
   // Sets the default API response to be the name of the Bot app, not the Bot user.

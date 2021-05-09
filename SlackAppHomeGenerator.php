@@ -7,6 +7,7 @@
   require __DIR__ . '/NWSAlert.php';
 
   // Static/Reused block content
+  $refreshDataButton = array('type'=>'actions','elements'=>[array('type'=>'button','action_id'=>'refresh_data','text'=>array('type'=>'plain_text','text'=>':arrows_clockwise: Refresh Data','emoji'=>true),'value'=>'appHomeRefresh')]);
   $botVersionBlock = array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>$bot_name . ' version: ' . $bot_version)]);
   $helpContextBlock = array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>'Get more bot help with `' . $bot_slashcommand . ' help` or at https://tempestweatherbot.mzonline.com/help.html')]);
   $dividerBlock = array('type'=>'divider');
@@ -18,7 +19,7 @@
    * @return array of block content payload
    */
   function getAppHomeBlocks($user_id) {
-    global $dividerBlock, $helpContextBlock, $botVersionBlock, $slackConditionIcons, $tempUnitLabel, $pressureUnitLabel, $windUnitLabel, $severityLevels;
+    global $dividerBlock, $refreshDataButton, $helpContextBlock, $botVersionBlock, $slackConditionIcons, $tempUnitLabel, $pressureUnitLabel, $windUnitLabel, $severityLevels;
   
     // Header Block Content
     $blks = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Tempest Weather Bot'))];
@@ -62,7 +63,7 @@
     foreach ($observationBlocks as $observationBlock) {
       array_push($blks, $observationBlock);
     }
-    array_push($blks, $dividerBlock, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Next four hours:*')));
+    array_push($blks, $refreshDataButton, $dividerBlock, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Next four hours:*')));
 
 
     // Grab the forecast data

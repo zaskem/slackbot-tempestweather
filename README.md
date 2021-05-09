@@ -37,12 +37,15 @@ Assuming both commands complete without issue, you can "install" the web request
 ### Optional "App Home" Functionality
 If desired, the "App Home Tab" can be easily enabled for this bot. Enabling the bot app home tab provides a condensed single-page view of current conditions and alerts, a four-hour forecast, and the five-day forecast without invoking any commands, and is refreshed each time the tab is opened.
 
-A handful of additional items must be configured to enable the home tab:
+A handful of additional items must be configured to enable the home tab and its interactive components:
 * Enable `Home Tab` on the bot's `App Home` feature settings;
 * Install an Event Request URL (listener) and create an Event Subscription for the `app_home_opened` bot event; and
 * Copy the event listener request handler to the path specified as the `Request URL` of your Event Subscriptions and edit line 6 (`$botCodePath`) accordingly.
+* Enable `Interactivity` on the bot's `Interactivity & Shortcuts` feature settings;
+* Install an Interactive Request URL (listener) in the Interactivity section of Interactivity & Shortcuts options for the bot; and
+* Copy the interactive listener request handler to the path specified as the `Request URL` of your Interactivity & Shortcuts and edit line 6 (`$botCodePath`) accordingly.
 
-As with the standard slash command request handler, it is very important to understand that the `eventlistener/index.php` file is _not_ intended to be present at the same location as the rest of the bot source.
+As with the standard slash command request handler, it is very important to understand that the `eventlistener/index.php` and `interactivelistener/index.php` files are _not_ intended to be present at the same location as the rest of the bot source.
 
 ### Ongoing Configuration Update Cadence
 In theory, the station metadata would rarely, if ever, change. Additionally, depending on your Slack Workspace, your user base may rarely change. It is of good form to periodically re-run the `SlackUsers.php` and `GenerateStationMetadata.php` scripts as a refresh. For higher-request environments, the history data files could also take up more local disk space than desired. A `CleanupHistory.php` script is included to easily purge the history cache.

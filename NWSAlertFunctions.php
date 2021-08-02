@@ -115,6 +115,44 @@
         getAlertsByPoint($toFile);
       }
     }
+    sortAlertsBySeverity($toFile, $alertDataFile);
+  }
+
+
+  /**
+   * sortAlertsBySeverity($toFile = true) - sort obtained NWS Alert data by Severity level
+   * 
+   * $toFile - boolean (default false) write output to file
+   * $alertFilePath - string of full file path (default null): only used if $toFile == true
+   * 
+   * @return array of response data if $toFile = true, no output returned otherwise
+   */
+  function sortAlertsBySeverity($toFile = false, $alertFilePath = null) {
+    $alertDataFile = include __DIR__ . '/config/nwsAlerts.generated.php';
+    $featureData = $alertDataFile['features'];
+
+    uasort($featureData, function($a, $b) {
+      global $severityLevels, $urgencyLevels;
+      // Sort first by severity level (desc)
+      $retval = array_search(strtolower($b['properties']['severity']), $severityLevels) <=> array_search(strtolower($a['properties']['severity']), $severityLevels);
+      if ($retval == 0) {
+        // Sort second by urgency level (desc, if severity was identical)
+        $retval = array_search(strtolower($b['properties']['urgency']), $urgencyLevels) <=> array_search(strtolower($a['properties']['urgency']), $urgencyLevels);
+        if ($retval == 0) {
+          // Sort third by date sent (most recent first, if urgency was also identical)
+            $retval = $b['properties']['sent'] <=> $a['properties']['sent'];
+        }
+      }
+      return $retval;
+    });
+    $alertDataFile['features'] = $featureData;
+
+    // Write out data
+    if ($toFile) {
+      file_put_contents($alertFilePath, '<?php return ' . var_export($alertDataFile, true) . '; ?>');
+    } else {
+      return $alertDataFile;
+    }
   }
 
 

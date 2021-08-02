@@ -19,13 +19,13 @@ class NWSAlert {
     $this->assignPropertiesFromData($alertFeature['properties']);
 
     $this->currentDateTime = new DateTime("now");
-    $this->alertEndsDateTime = new DateTime($this->ends);
+    $this->alertEndsDateTime = (null === $this->ends) ? new DateTime($this->expires) : new DateTime($this->ends);
     $this->intervalRemaining = $this->alertEndsDateTime->diff($this->currentDateTime);
     $this->alertLastUpdated = date('l, F j, g:i a', strtotime($this->sent));
     $this->alertSeverityLevel = array_search(strtolower($this->severity), $this->severityLevels);
     $this->alertDetails = $this->reformatNWSTextBlocks($this->description);
-    $this->longHeadline = (strlen($this->parameters['NWSheadline'][0]) > 150);
-    $this->alertHeadline = $this->parameters['NWSheadline'][0];
+    $this->longHeadline = isset($this->arameters['NWSheadline'][0]) ? (strlen($this->parameters['NWSheadline'][0]) > 150) : 0;
+    $this->alertHeadline = isset($this->parameters['NWSheadline'][0]) ? $this->parameters['NWSheadline'][0] : "";
     if ($this->longHeadline) {
       $this->alertHeadlines = explode('... ...', $this->alertHeadline);
     } else {

@@ -3,12 +3,15 @@
   $nwsUserAgent = "(Your WeatherBot Name, contactinfo, email@host)";
   $nwsZoneID = ""; // A given location will likely have two options (zone and county), e.g. MNZ000 / MNC000
   $severityLevels = array(0=>'', 1=>'unknown',2=>'minor',3=>'moderate',4=>'severe',5=>'extreme');
+  $urgencyLevels = array(0=>'', 1=>'unknown',2=>'future',3=>'expected',4=>'immediate');
+  $certaintyLevels = array(0=>'', 1=>'unknown',2=>'unlikely',3=>'possible',4=>'likely',5=>'observed');
 
   $stationMetadata = include __DIR__ . '/stationMetadata.generated.php';
   $stationLat = round($stationMetadata['latitude'], 4, PHP_ROUND_HALF_DOWN);
   $stationLong = round($stationMetadata['longitude'], 4, PHP_ROUND_HALF_DOWN);
 
-  $alertUrgency = 'expected'; // immediate, expected, future, past, unknown, null
+// Alert Urgency API Query Values You Want
+  $alertUrgency = urlencode('immediate,expected,future,unknown'); // immediate, expected, future, past, unknown, null
 
   $alertTypeEndpoint = 'https://api.weather.gov/alerts/types';
 

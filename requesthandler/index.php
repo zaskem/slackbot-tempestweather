@@ -73,8 +73,15 @@
       $commandArgs = $_POST['text'];
     }
 
+    // Clean up missing extraneous arguments to avoid unnecessary error notices per Issue #58 (set a null value)
+    if (!isset($parsedArgs[1])) { $parsedArgs[1] = null; }
+    if (!isset($parsedArgs[2])) { $parsedArgs[2] = null; }
+
     // Determine the type/nature of a seemingly valid request
-    if ((!isset($parsedArgs[0])) || ('' == $parsedArgs[0]) || ("now" == trim($parsedArgs[0])) || ("private" == trim($parsedArgs[0]))) {
+    if (!isset($parsedArgs[0])) {
+      // No arguments == current observations
+      $natureOfRequest = 'current';
+    } else if (('' == $parsedArgs[0]) || ("now" == trim($parsedArgs[0])) || ("private" == trim($parsedArgs[0]))) {
       // Does the command match any of the 'current conditions' (incl. no text/default) patterns?
       $natureOfRequest = 'current';
     } else if (("alerts" == trim($parsedArgs[0])) || ("alert" == trim($parsedArgs[0]))) {
@@ -337,6 +344,9 @@
       case 'historyrange':
         // Parse out and translate the supported statements
         $historyArgs = explode(' ', $commandArgs);
+        if (!isset($historyArgs[1])) { $historyArgs[1] = null; }
+        if (!isset($historyArgs[2])) { $historyArgs[2] = null; }
+
         if ("last" == trim($historyArgs[0])) {
           // "last" X [hour/hours/day/days]
           if (("hour" == trim($historyArgs[2])) || ("hours" == trim($historyArgs[2]))) {

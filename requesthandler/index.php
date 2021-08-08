@@ -115,7 +115,7 @@
       // Current Observation
       case 'current':
         require $botCodePath . '/NWSAlert.php';
-        require $botCodePath . '/NWSAlertFunctions.php';
+        require $botCodePath . '/NWSAPIFunctions.php';
         $slackbot_details['icon_emoji'] = ':thermometer:';
 
         // Refresh the alert data
@@ -168,7 +168,7 @@
       // Alerts
       case 'alerts':
         require $botCodePath . '/NWSAlert.php';
-        require $botCodePath . '/NWSAlertFunctions.php';
+        require $botCodePath . '/NWSAPIFunctions.php';
         $slackbot_details['icon_emoji'] = ':warning:';
 
         // Refresh the alert data

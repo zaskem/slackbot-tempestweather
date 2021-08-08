@@ -18,7 +18,7 @@
     // Determine what to do based on the event type
     switch ($eventArray['actions'][0]['action_id']) {
       case 'refresh_data': // Refresh App Home Data
-        require $botCodePath . '/NWSAlertFunctions.php';
+        require $botCodePath . '/NWSAPIFunctions.php';
         // Generate alert data as necessary
         updateAlertDataFile();
 

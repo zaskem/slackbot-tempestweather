@@ -22,7 +22,7 @@
         // Determine what to do next based on the tab in scope
         switch ($eventArray['event']['tab']) {
           case 'home': // Home Tab
-            require $botCodePath . '/NWSAlertFunctions.php';
+            require $botCodePath . '/NWSAPIFunctions.php';
             // Generate alert data as necessary
             updateAlertDataFile();
 

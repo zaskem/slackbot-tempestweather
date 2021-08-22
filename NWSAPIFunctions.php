@@ -24,6 +24,29 @@
 
 
   /**
+   * updatePointMetadataFile($toFile = true) -- generate or refresh NWS Point metadata file as necessary
+   * 
+   * $toFile - boolean (default true) to write point metadata to file
+   * 
+   * It's important to note that by using the file output (default behavior), the number of requests in a high-use 
+   *  environment is substantially reduced as the bot will only ping the API for fresh metadata after at least 30
+   *  days have passed since the last refresh.
+   */
+  function updatePointMetadataFile($toFile = true) {
+    $pointMetadataFile = __DIR__ . '/config/nwsPoint.generated.php';
+    // Generate alert data as necessary
+    if (file_exists($pointMetadataFile)) {
+      // Refresh the metadata if it's older than 30 days
+      if (filemtime($pointMetadataFile) < (time() - 2592000)) {
+        getPointMetadata($toFile);
+      }
+    } else {
+      getPointMetadata($toFile);
+    }
+  }
+
+
+  /**
    * getZonesForPoint($toFile = false) - obtain NWS Zone data by Point (coordinates)
    * 
    * Function is helpful in setup/troubleshooting; not used in bot functionality

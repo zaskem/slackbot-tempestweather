@@ -24,8 +24,10 @@ class NWSAlert {
     $this->alertLastUpdated = date('l, F j, g:i a', strtotime($this->sent));
     $this->alertSeverityLevel = array_search(strtolower($this->severity), $this->severityLevels);
     $this->alertDetails = $this->reformatNWSTextBlocks($this->description);
-    $this->longHeadline = isset($this->arameters['NWSheadline'][0]) ? (strlen($this->parameters['NWSheadline'][0]) > 150) : 0;
-    $this->alertHeadline = isset($this->parameters['NWSheadline'][0]) ? $this->parameters['NWSheadline'][0] : "";
+    // Figure out headline option (prefer 'NWSheadline' if present but accept 'headline')
+    $this->rawHeadlineText = isset($this->parameters['NWSheadline'][0]) ? $this->parameters['NWSheadline'][0] : $this->headline;
+    $this->longHeadline = isset($this->rawHeadlineText) ? (strlen($this->rawHeadlineText) > 150) : 0;
+    $this->alertHeadline = isset($this->rawHeadlineText) ? $this->rawHeadlineText : "";
     if ($this->longHeadline) {
       $this->alertHeadlines = explode('... ...', $this->alertHeadline);
     } else {

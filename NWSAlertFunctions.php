@@ -129,29 +129,32 @@
    */
   function sortAlertsBySeverity($toFile = false, $alertFilePath = null) {
     $alertDataFile = include __DIR__ . '/config/nwsAlerts.generated.php';
-    $featureData = $alertDataFile['features'];
+    // Only do something if feature data is not null
+    if (isset($alertDataFile['features'])) {
+      $featureData = $alertDataFile['features'];
 
-    uasort($featureData, function($a, $b) {
-      global $severityLevels, $urgencyLevels;
-      // Sort first by severity level (desc)
-      $retval = array_search(strtolower($b['properties']['severity']), $severityLevels) <=> array_search(strtolower($a['properties']['severity']), $severityLevels);
-      if ($retval == 0) {
-        // Sort second by urgency level (desc, if severity was identical)
-        $retval = array_search(strtolower($b['properties']['urgency']), $urgencyLevels) <=> array_search(strtolower($a['properties']['urgency']), $urgencyLevels);
+      uasort($featureData, function($a, $b) {
+        global $severityLevels, $urgencyLevels;
+        // Sort first by severity level (desc)
+        $retval = array_search(strtolower($b['properties']['severity']), $severityLevels) <=> array_search(strtolower($a['properties']['severity']), $severityLevels);
         if ($retval == 0) {
-          // Sort third by date sent (most recent first, if urgency was also identical)
-            $retval = $b['properties']['sent'] <=> $a['properties']['sent'];
+          // Sort second by urgency level (desc, if severity was identical)
+          $retval = array_search(strtolower($b['properties']['urgency']), $urgencyLevels) <=> array_search(strtolower($a['properties']['urgency']), $urgencyLevels);
+          if ($retval == 0) {
+            // Sort third by date sent (most recent first, if urgency was also identical)
+              $retval = $b['properties']['sent'] <=> $a['properties']['sent'];
+          }
         }
-      }
-      return $retval;
-    });
-    $alertDataFile['features'] = $featureData;
+        return $retval;
+      });
+      $alertDataFile['features'] = $featureData;
 
-    // Write out data
-    if ($toFile) {
-      file_put_contents($alertFilePath, '<?php return ' . var_export($alertDataFile, true) . '; ?>');
-    } else {
-      return $alertDataFile;
+      // Write out data
+      if ($toFile) {
+        file_put_contents($alertFilePath, '<?php return ' . var_export($alertDataFile, true) . '; ?>');
+      } else {
+        return $alertDataFile;
+      }
     }
   }
 

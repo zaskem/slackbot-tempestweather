@@ -152,12 +152,20 @@
 
         getLastStationObservation();
         $lastObservation = include $botCodePath . '/config/lastObservation.generated.php';
-        $observation = new TempestObservation('current', $lastObservation['obs'][0]);
+        if (!isset($lastObservation['obs'][0])) {
+          // We are missing valid observation data
+          // Create basic text response (fallback)
+          $responseText = 'There was a problem with current observation data.';
+          // Use blocks for prettier response
+          $slackbot_details['blocks'] = array(array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'There was a problem with current observation data.')));
+        } else {
+          $observation = new TempestObservation('current', $lastObservation['obs'][0]);
 
-        // Create basic text response (fallback)
-        $responseText = "At $observation->f_timestamp, the temperature was $observation->f_temperature (feels like $observation->f_feelsLike) with a $observation->f_windDir wind at $observation->f_windAvg.";
-        // Use blocks for prettier response
-        $slackbot_details['blocks'] = getCurrentObservationBlocks($observation, $alert);
+          // Create basic text response (fallback)
+          $responseText = "At $observation->f_timestamp, the temperature was $observation->f_temperature (feels like $observation->f_feelsLike) with a $observation->f_windDir wind at $observation->f_windAvg.";
+          // Use blocks for prettier response
+          $slackbot_details['blocks'] = getCurrentObservationBlocks($observation, $alert);
+        }
 
         $result = SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
         if ($debug_bot) {

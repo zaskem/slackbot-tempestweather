@@ -26,10 +26,13 @@ class TempestObservation {
    *    due to the data returned from the Tempest API. This argument allows the constructor to
    *    adequately handle properties and calculations for disparate situations.
    * @args $observationData - array of an individual Tempest observation.
+   *  The class default is set to NULL only for error-handling purposes. A valid set of $observationData
+   *    must be provided for the class to behave/output as designed.
    */
-  public function __construct(string $observationType, array $observationData) {
+  public function __construct(string $observationType, array $observationData = null) {
     try {
       $this->validObsType($observationType);
+      $this->validObsData($observationData);
     } catch (Exception $e) {
       die($e->getMessage());
     }
@@ -68,6 +71,27 @@ class TempestObservation {
   private function validObsType($type) {
     if (!in_array($type, $this->validObservationTypes)) {
       throw new Exception('Invalid observation type specified.');
+    } else {
+      return true;
+    }
+  }
+
+
+  /**
+   * validObsData($data) - check for valid observation data
+   * 
+   * This function is used in the constructor override to ensure a valid observation dataset was provided
+   *  as Things Will Go Very Wrong when the observation data is missing, malformed, or incomplete.
+   * 
+   * Much more a basic 'safety check' than anything.
+   * 
+   * @return boolean true
+   */
+  private function validObsData($data) {
+    if (is_null($data)) {
+      throw new Exception('Invalid observation data provided.');
+    } else if (count($data) < 1) {
+      throw new Exception('Incomplete observation data provided.');
     } else {
       return true;
     }

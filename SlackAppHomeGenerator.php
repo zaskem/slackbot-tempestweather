@@ -58,13 +58,17 @@
     // Current Observation
     getLastStationObservation();
     $lastObservation = include __DIR__ . '/config/lastObservation.generated.php';
-    $observation = new TempestObservation('current', $lastObservation['obs'][0]);
-    $observationBlocks = $observation->getHomeObservationBlocks();
-    foreach ($observationBlocks as $observationBlock) {
-      array_push($blks, $observationBlock);
+    if (!isset($lastObservation['obs'][0])) {
+      // We are missing valid observation data
+      array_push($blks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'There was a problem with current observation data.')));
+    } else {
+      $observation = new TempestObservation('current', $lastObservation['obs'][0]);
+      $observationBlocks = $observation->getHomeObservationBlocks();
+      foreach ($observationBlocks as $observationBlock) {
+        array_push($blks, $observationBlock);
+      }
     }
     array_push($blks, $refreshDataButton, $dividerBlock, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Next four hours:*')));
-
 
     // Grab the forecast data
     getStationForecast();

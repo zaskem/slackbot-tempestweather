@@ -44,6 +44,7 @@ The Tempest WeatherBot's default behavior is to display the current/most recent 
 | `/weather now` | Display current conditions |
 | `/weather private` | Display current conditions privately |
 | `/weather alerts` | Display current weather alerts |
+| `/weather alerts [force,refresh]` | Display current weather alerts and override any cached alert data |
 
 ---
 ## Forecast Commands and Range

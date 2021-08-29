@@ -109,7 +109,7 @@
 
 
   /**
-   * updateAlertDataFile($toFile = true, $byZone = false) -- generate or refresh NWS Alert data file as necessary
+   * updateAlertDataFile($toFile = true, $force = false, $byZone = false) -- generate or refresh NWS Alert data file as necessary
    * 
    * $toFile - boolean (default true) to write alert data to file
    * 
@@ -117,28 +117,33 @@
    *  environment is reduced as the bot will only ping the API for fresh alert data after at least 10 minutes have 
    *  passed since the last request.
    * 
+   * $force - boolean (default false) to force-reload alert data regardless of elapsed time
+   * 
    * $byZone - boolean (default false) to use NWS Zone or County instead of Point (coordinates of station)
    */
-  function updateAlertDataFile($toFile = true, $byZone = false) {
+  function updateAlertDataFile($toFile = true, $force = false, $byZone = false) {
     $alertDataFile = __DIR__ . '/config/nwsAlerts.generated.php';
     // Generate alert data as necessary
-    if (file_exists($alertDataFile)) {
+    if ((!$force) && (file_exists($alertDataFile))) {
       // Refresh the alert data if it's older than 10 minutes
       if (filemtime($alertDataFile) < (time() - 600)) {
         if ($byZone) {
           getAlertsByZone($toFile);
+          sortAlertsBySeverity($toFile, $alertDataFile);
         } else {
           getAlertsByPoint($toFile);
+          sortAlertsBySeverity($toFile, $alertDataFile);
         }
       }
     } else {
       if ($byZone) {
         getAlertsByZone($toFile);
+        sortAlertsBySeverity($toFile, $alertDataFile);
       } else {
         getAlertsByPoint($toFile);
+        sortAlertsBySeverity($toFile, $alertDataFile);
       }
     }
-    sortAlertsBySeverity($toFile, $alertDataFile);
   }
 
 

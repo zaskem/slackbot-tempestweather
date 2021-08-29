@@ -1,20 +1,29 @@
 <?php
 // API DETAILS AT https://www.weather.gov/documentation/services-web-api#/
+
+// Variables designed to be configurable by site
+  // Binary values to use/enable NWS API features
+  $useNWSAPIAlerts = true;
+  $useNWSAPIForecasts = false;
+  // Your bot user agent and contact info for NWS requests
   $nwsUserAgent = "(Your WeatherBot Name, contactinfo, email@host)";
+  // Your Zone ID (not used by default, but set as desired in lieu of station lat/long)
   $nwsZoneID = ""; // A given location will likely have two options (zone and county), e.g. MNZ000 / MNC000
+  // Alert Urgency API Query Values You Want
+  $alertUrgency = urlencode('immediate,expected,future,unknown'); // immediate, expected, future, past, unknown, null
+
+// API Severity levels (should match NWS API supported values)
   $severityLevels = array(0=>'', 1=>'unknown',2=>'minor',3=>'moderate',4=>'severe',5=>'extreme');
   $urgencyLevels = array(0=>'', 1=>'unknown',2=>'future',3=>'expected',4=>'immediate');
   $certaintyLevels = array(0=>'', 1=>'unknown',2=>'unlikely',3=>'possible',4=>'likely',5=>'observed');
 
+// Automatically generated lat/long from station data
   $stationMetadata = include __DIR__ . '/stationMetadata.generated.php';
   $stationLat = round($stationMetadata['latitude'], 4, PHP_ROUND_HALF_DOWN);
   $stationLong = round($stationMetadata['longitude'], 4, PHP_ROUND_HALF_DOWN);
 
-// Alert Urgency API Query Values You Want
-  $alertUrgency = urlencode('immediate,expected,future,unknown'); // immediate, expected, future, past, unknown, null
-
+// API Endpoints
   $alertTypeEndpoint = 'https://api.weather.gov/alerts/types';
-
   $pointEndpoint = "https://api.weather.gov/points/$stationLat%2C$stationLong";
   $zoneEndpoint = "https://api.weather.gov/zones?point=$stationLat%2C$stationLong";
   $pointAlertEndpointBase = "https://api.weather.gov/alerts/active?point=$stationLat%2C$stationLong";

@@ -22,10 +22,12 @@
         // Determine what to do next based on the tab in scope
         switch ($eventArray['event']['tab']) {
           case 'home': // Home Tab
-            require $botCodePath . '/NWSAlertFunctions.php';
+            require $botCodePath . '/NWSAPIFunctions.php';
             // Generate alert data as necessary
-            updateAlertDataFile();
-
+            if ($useNWSAPIAlerts) {
+              updateAlertDataFile();
+            }
+            
             // Generate the App Home tab payload based on the calling user's ID
             $slackPayload = json_encode(getAppHomeBlocks($eventArray['event']['user']));
 

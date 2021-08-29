@@ -31,7 +31,8 @@
           array(['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . '`'],['type'=>'mrkdwn','text'=>'Display current conditions'],
             ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' now`'],['type'=>'mrkdwn','text'=>'Display current conditions'],
             ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' now private`'],['type'=>'mrkdwn','text'=>'Display current conditions with a private response'],
-            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' alerts`'],['type'=>'mrkdwn','text'=>'Display current weather alerts']
+            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' alerts`'],['type'=>'mrkdwn','text'=>'Display current weather alerts'],
+            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' alerts [force,refresh]`'],['type'=>'mrkdwn','text'=>'Display current weather alerts and override cached alert data']
           )
         ), $dividerBlock, $keywordPrivateBlock, $dividerBlock, $botVersionBlock);
         break;
@@ -87,7 +88,8 @@
           array(['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . '`'],['type'=>'mrkdwn','text'=>'Display current conditions'],
             ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' now`'],['type'=>'mrkdwn','text'=>'Display current conditions'],
             ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' private`'],['type'=>'mrkdwn','text'=>'Display current conditions privately'],
-            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' alerts`'],['type'=>'mrkdwn','text'=>'Display current weather alerts']
+            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' alerts`'],['type'=>'mrkdwn','text'=>'Display current weather alerts'],
+            ['type'=>'mrkdwn','text'=>'`' . $bot_slashcommand . ' alerts [force,refresh]`'],['type'=>'mrkdwn','text'=>'Display current weather alerts and override cached alert data']
           )
         ));
         array_push($blocks, array('type'=>'section','fields'=>

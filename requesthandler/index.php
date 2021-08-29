@@ -118,36 +118,40 @@
         require $botCodePath . '/NWSAPIFunctions.php';
         $slackbot_details['icon_emoji'] = ':thermometer:';
 
-        // Refresh the alert data
-        updateAlertDataFile();
+        if ($useNWSAPIAlerts) {
+          // Refresh the alert data
+          updateAlertDataFile();
 
-        $alertData = include $botCodePath . '/config/nwsAlerts.generated.php';
-        if (array_key_exists('status', $alertData)) {
-          // We have an unexpected status (likely a service timeout)
-          // Silently fail/ignore
-          $alert = null;
-        } else {
-          $activeAlerts = count($alertData['features']);
-
-          if ($activeAlerts > 0) {
-            $useFeatureIndex = 0;
-            if ($activeAlerts > 1) {
-              // Need to obtain just the "most severe" current alert
-              $highestSeverity = 0;
-              $i = 0;
-              while ($i < $activeAlerts) {
-                $alertSeverity = array_search(strtolower($alertData['features'][$i]['properties']['severity']), $severityLevels);
-                if ($alertSeverity > $highestSeverity) {
-                  $highestSeverity = $alertSeverity;
-                  $useFeatureIndex = $i;
-                }
-                $i++;
-              }
-            }
-            $alert = new NWSAlert($alertData['features'][$useFeatureIndex]);
-          } else {
+          $alertData = include $botCodePath . '/config/nwsAlerts.generated.php';
+          if (array_key_exists('status', $alertData)) {
+            // We have an unexpected status (likely a service timeout)
+            // Silently fail/ignore
             $alert = null;
+          } else {
+            $activeAlerts = count($alertData['features']);
+
+            if ($activeAlerts > 0) {
+              $useFeatureIndex = 0;
+              if ($activeAlerts > 1) {
+                // Need to obtain just the "most severe" current alert
+                $highestSeverity = 0;
+                $i = 0;
+                while ($i < $activeAlerts) {
+                  $alertSeverity = array_search(strtolower($alertData['features'][$i]['properties']['severity']), $severityLevels);
+                  if ($alertSeverity > $highestSeverity) {
+                    $highestSeverity = $alertSeverity;
+                    $useFeatureIndex = $i;
+                  }
+                  $i++;
+                }
+              }
+              $alert = new NWSAlert($alertData['features'][$useFeatureIndex]);
+            } else {
+              $alert = null;
+            }
           }
+        } else {
+          $alert = null;
         }
 
         getLastStationObservation();
@@ -175,58 +179,83 @@
         break;
       // Alerts
       case 'alerts':
+        $forceUpdate = false;
         require $botCodePath . '/NWSAlert.php';
         require $botCodePath . '/NWSAPIFunctions.php';
-        $slackbot_details['icon_emoji'] = ':warning:';
+        if ($useNWSAPIAlerts) {
+          $slackbot_details['icon_emoji'] = ':warning:';
 
-        // Refresh the alert data
-        updateAlertDataFile();
-
-        $alertData = include $botCodePath . '/config/nwsAlerts.generated.php';
-        if (array_key_exists('status', $alertData)) {
-          // We have an unexpected status (likely a service timeout)
-          $slackbot_details['icon_emoji'] = ':octagonal_sign:';
-          // Create basic text response (fallback)
-          $responseText = "There was a problem obtaining alert data: $alertData[status]";
-          // Use blocks for prettier response
-          $slackbot_details['blocks'] = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Active NWS alerts','emoji'=>true)), array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'There was a problem obtaining alert data: ' . $alertData['status']))];
-
-          $result = SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
-          if ($debug_bot) {
-            header("Content-Type: application/json");
-            print json_encode(array('response_type' => 'ephemeral', 'text' => $_POST['command'] . ' ' . $_POST['text'] . ' output response: ' . $result));
+          $validArgs = array('update','force','refresh','reload');
+          // Adjust if/as necessary based on any matching arguments
+          $alertArgs = explode(' ', $commandArgs);
+          if (isset($alertArgs[1])) {
+            // Force alert dataset refresh?
+            if (in_array(trim($alertArgs[1]), $validArgs)) {
+              $forceUpdate = true;
+            }
           }
-        } else {
-          $activeAlerts = count($alertData['features']);
 
-          if ($activeAlerts > 0) {
-            $result = '';
-            // Fire off an alert block for each item
-            foreach ($alertData['features'] as $alertFeature) {
-              $alert = new NWSAlert($alertFeature);
+          // Refresh the alert data (as necessary)
+          updateAlertDataFile(true, $forceUpdate);
 
-              // Create basic text response (fallback)
-              $responseText = $alert->headline;
-              // Use blocks for prettier response
-              $slackbot_details['blocks'] = $alert->getFullAlertBlocks();
-
-              $result .= SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
-            }
-            if ($debug_bot) {
-              header("Content-Type: application/json");
-              print json_encode(array('response_type' => 'ephemeral', 'text' => $_POST['command'] . ' ' . $_POST['text'] . ' output response: ' . $result));
-            }
-          } else {
+          $alertData = include $botCodePath . '/config/nwsAlerts.generated.php';
+          if (array_key_exists('status', $alertData)) {
+            // We have an unexpected status (likely a service timeout)
+            $slackbot_details['icon_emoji'] = ':octagonal_sign:';
             // Create basic text response (fallback)
-            $responseText = "No active alerts at this time.";
+            $responseText = "There was a problem obtaining alert data: $alertData[status]";
             // Use blocks for prettier response
-            $slackbot_details['blocks'] = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Active NWS alerts','emoji'=>true)), array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'No active alerts at this time.'))];
+            $slackbot_details['blocks'] = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Active NWS alerts','emoji'=>true)), array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'There was a problem obtaining alert data: ' . $alertData['status']))];
 
             $result = SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
             if ($debug_bot) {
               header("Content-Type: application/json");
               print json_encode(array('response_type' => 'ephemeral', 'text' => $_POST['command'] . ' ' . $_POST['text'] . ' output response: ' . $result));
             }
+          } else {
+            $activeAlerts = count($alertData['features']);
+
+            if ($activeAlerts > 0) {
+              $result = '';
+              // Fire off an alert block for each item
+              foreach ($alertData['features'] as $alertFeature) {
+                $alert = new NWSAlert($alertFeature);
+
+                // Create basic text response (fallback)
+                $responseText = $alert->headline;
+                // Use blocks for prettier response
+                $slackbot_details['blocks'] = $alert->getFullAlertBlocks();
+
+                $result .= SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
+              }
+              if ($debug_bot) {
+                header("Content-Type: application/json");
+                print json_encode(array('response_type' => 'ephemeral', 'text' => $_POST['command'] . ' ' . $_POST['text'] . ' output response: ' . $result));
+              }
+            } else {
+              // Create basic text response (fallback)
+              $responseText = "No active alerts at this time.";
+              // Use blocks for prettier response
+              $slackbot_details['blocks'] = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Active NWS alerts','emoji'=>true)), array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'No active alerts at this time.'))];
+
+              $result = SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
+              if ($debug_bot) {
+                header("Content-Type: application/json");
+                print json_encode(array('response_type' => 'ephemeral', 'text' => $_POST['command'] . ' ' . $_POST['text'] . ' output response: ' . $result));
+              }
+            }
+          }
+        } else {
+          $slackbot_details['icon_emoji'] = ':warning:';
+          // Create basic text response (fallback)
+          $responseText = "NWS Alert functionality on this bot is disabled.";
+          // Use blocks for prettier response
+          $slackbot_details['blocks'] = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'NWS Alerts Disabled','emoji'=>true)), array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'NWS Alert functionality on this bot is disabled.'))];
+
+          $result = SlackPost($responseText, $_POST['response_url'], $private, $slackbot_details, $debug_bot);
+          if ($debug_bot) {
+            header("Content-Type: application/json");
+            print json_encode(array('response_type' => 'ephemeral', 'text' => $_POST['command'] . ' ' . $_POST['text'] . ' output response: ' . $result));
           }
         }
         break;

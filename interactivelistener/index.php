@@ -20,8 +20,10 @@
       case 'refresh_data': // Refresh App Home Data
         require $botCodePath . '/NWSAPIFunctions.php';
         // Generate alert data as necessary
-        updateAlertDataFile();
-
+        if ($useNWSAPIAlerts) {
+          updateAlertDataFile();
+        }
+        
         // Generate the App Home tab payload based on the calling user's ID
         $slackPayload = json_encode(getAppHomeBlocks($eventArray['user']['id']));
 

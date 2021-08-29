@@ -19,39 +19,42 @@
    * @return array of block content payload
    */
   function getAppHomeBlocks($user_id) {
-    global $dividerBlock, $refreshDataButton, $helpContextBlock, $botVersionBlock, $slackConditionIcons, $tempUnitLabel, $pressureUnitLabel, $windUnitLabel, $severityLevels;
+    global $useNWSAPIAlerts, $dividerBlock, $refreshDataButton, $helpContextBlock, $botVersionBlock, $slackConditionIcons, $tempUnitLabel, $pressureUnitLabel, $windUnitLabel, $severityLevels;
   
     // Header Block Content
     $blks = [array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Tempest Weather Bot'))];
-    // Alert Data
-    $alertData = include __DIR__ . '/config/nwsAlerts.generated.php';
-    if (array_key_exists('status', $alertData)) {
-      // We have an unexpected status (likely a service timeout)
-      array_push($blks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'There was a problem obtaining alert data: ' . $alertData['status'])), $dividerBlock);
-    } else {
-      $activeAlerts = count($alertData['features']);
 
-      if ($activeAlerts > 0) {
-        $useFeatureIndex = 0;
-        if ($activeAlerts > 1) {
-          // Need to obtain just the "most severe" current alert
-          $highestSeverity = 0;
-          $i = 0;
-          while ($i < $activeAlerts) {
-            $alertSeverity = array_search(strtolower($alertData['features'][$i]['properties']['severity']), $severityLevels);
-            if ($alertSeverity > $highestSeverity) {
-              $highestSeverity = $alertSeverity;
-              $useFeatureIndex = $i;
+    // Alert Data
+    if ($useNWSAPIAlerts) {
+      $alertData = include __DIR__ . '/config/nwsAlerts.generated.php';
+      if (array_key_exists('status', $alertData)) {
+        // We have an unexpected status (likely a service timeout)
+        array_push($blks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'There was a problem obtaining alert data: ' . $alertData['status'])), $dividerBlock);
+      } else {
+        $activeAlerts = count($alertData['features']);
+
+        if ($activeAlerts > 0) {
+          $useFeatureIndex = 0;
+          if ($activeAlerts > 1) {
+            // Need to obtain just the "most severe" current alert
+            $highestSeverity = 0;
+            $i = 0;
+            while ($i < $activeAlerts) {
+              $alertSeverity = array_search(strtolower($alertData['features'][$i]['properties']['severity']), $severityLevels);
+              if ($alertSeverity > $highestSeverity) {
+                $highestSeverity = $alertSeverity;
+                $useFeatureIndex = $i;
+              }
+              $i++;
             }
-            $i++;
           }
+          $alert = new NWSAlert($alertData['features'][$useFeatureIndex]);
+          $alertBlocks = $alert->getHomeBlocks();
+          foreach ($alertBlocks as $alertBlock) {
+            array_push($blks, $alertBlock);
+          }
+          array_push($blks, $dividerBlock);
         }
-        $alert = new NWSAlert($alertData['features'][$useFeatureIndex]);
-        $alertBlocks = $alert->getHomeBlocks();
-        foreach ($alertBlocks as $alertBlock) {
-          array_push($blks, $alertBlock);
-        }
-        array_push($blks, $dividerBlock);
       }
     }
 

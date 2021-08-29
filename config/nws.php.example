@@ -3,7 +3,6 @@
 
 // Variables designed to be configurable by site
   // Binary values to use/enable NWS API features
-  $useNWSAPI = true;
   $useNWSAPIAlerts = true;
   $useNWSAPIForecasts = false;
   // Your bot user agent and contact info for NWS requests

@@ -2,9 +2,11 @@
 // API DETAILS AT https://www.weather.gov/documentation/services-web-api#/
 
 // Variables designed to be configurable by site
-  // Binary values to use/enable NWS API features
+  // Binary values to use/enable NWS API features; forecast update cadence (in seconds)
   $useNWSAPIAlerts = true;
   $useNWSAPIForecasts = false;
+  $nwsAPIHourlyForcastCadence = 3600;
+  $nwsAPIForecastCadence = 21600;
   // Your bot user agent and contact info for NWS requests
   $nwsUserAgent = "(Your WeatherBot Name, contactinfo, email@host)";
   // Your Zone ID (not used by default, but set as desired in lieu of station lat/long)

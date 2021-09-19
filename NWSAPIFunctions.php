@@ -188,6 +188,94 @@
 
 
   /**
+   * getForecastData($toFile = true) - obtain NWS 7-Day Forecast Data
+   * 
+   * $toFile - boolean (default true) write output to file
+   * 
+   * @return array of response data if $toFile = false, no output returned otherwise
+   */
+  function getForecastData($toFile = true) {
+    updatePointMetadataFile();
+    $pointData = include __DIR__ . '/config/nwsPoint.generated.php';
+    $forecastData = NWSCurlGetRequest($pointData['properties']['forecast']);
+
+    // Write out data
+    if ($toFile) {
+      if (isset($forecastData['properties'])) { // Don't overwrite NULL forecast data if API response was borked
+        file_put_contents(__DIR__ . '/config/nwsForecast.generated.php', '<?php return ' . var_export($forecastData['properties'], true) . '; ?>');
+      }
+    } else {
+      return $forecastData['properties'];
+    }
+  }
+
+
+  /**
+   * updateNWSForecast($toFile = true) - refresh NWS 7-Day Forecast data as necessary
+   * 
+   * $toFile - boolean (default true) write output to file
+   */
+  function updateNWSForecast($toFile = true) {
+    global $nwsAPIForecastCadence;
+    $forecastDataFile = __DIR__ . '/config/nwsForecast.generated.php';
+
+    // Generate refreshed data as necessary
+    if (file_exists($forecastDataFile)) {
+      // Refresh data if it's older than the desired cadence
+      if (filemtime($forecastDataFile) < (time() - $nwsAPIForecastCadence)) {
+        getForecastData($toFile);
+      }
+    } else {
+      getForecastData($toFile);
+    }
+  }
+
+
+  /**
+   * getHourlyForecastData($toFile = true) - obtain NWS Hourly Forecast Data
+   * 
+   * $toFile - boolean (default true) write output to file
+   * 
+   * @return array of response data if $toFile = false, no output returned otherwise
+   */
+  function getHourlyForecastData($toFile = true) {
+    updatePointMetadataFile();
+    $pointData = include __DIR__ . '/config/nwsPoint.generated.php';
+    $hourlyForecastData = NWSCurlGetRequest($pointData['properties']['forecastHourly']);
+
+    // Write out data
+    if ($toFile) {
+      if (isset($hourlyForecastData['properties'])) { // Don't overwrite NULL forecast data if API response was borked
+        file_put_contents(__DIR__ . '/config/nwsHourlyForecast.generated.php', '<?php return ' . var_export($hourlyForecastData['properties'], true) . '; ?>');
+      }
+    } else {
+      return $hourlyForecastData['properties'];
+    }
+  }
+
+
+  /**
+   * updateNWSHourlyForecast($toFile = true) - refresh NWS Hourly Forecast data as necessary
+   * 
+   * $toFile - boolean (default true) write output to file
+   */
+  function updateNWSHourlyForecast($toFile = true) {
+    global $nwsAPIHourlyForcastCadence;
+    $hourlyForecastDataFile = __DIR__ . '/config/nwsHourlyForecast.generated.php';
+
+    // Generate refreshed data as necessary
+    if (file_exists($hourlyForecastDataFile)) {
+      // Refresh data if it's older than the desired cadence
+      if (filemtime($hourlyForecastDataFile) < (time() - $nwsAPIHourlyForcastCadence)) {
+        getHourlyForecastData($toFile);
+      }
+    } else {
+      getHourlyForecastData($toFile);
+    }
+  }
+
+
+  /**
    * NWSCurlGetRequest($url) - Generalized function for common NWS Alert API requests.
    * 
    * $url - Full URL for request with GET parameters encoded if/as necessary

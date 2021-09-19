@@ -22,15 +22,15 @@ This bot can be modified to respond to an Event in addition to or instead of usi
 Three configuration files exist in the `config/` directory. Example/Stubout versions are provided, and each of these files should be copied without the `.example` extension (e.g. `cp bot.php.example bot.php`):
 
 * `bot.php`
+* `nws.php`
 * `slack.php`
 * `tempest.php`
-* `nws.php`
 
 Edit each file as necessary for your bot. Note that as the bot goes into production, several dynamic `[title].generated.php` files will also end up in the `config/` directory. They, and files automatically generated in the `config/history/` directory, can be ignored and should not be edited.
 
 Before the bot can properly respond to requests, two scripts must be manually invoked on the bot host to generate access lists and metadata:
-1. `php SlackUsers.php` will generate the "access list" of accounts in your Workspace, which is required to loosely "authenticate" a valid request.
-2. `php GenerateStationMetadata.php` will obtain the Tempest station metadata, which is required for all other Tempest API calls.
+1. `php jobs/SlackUsers.php` will generate the "access list" of accounts in your Workspace, which is required to loosely "authenticate" a valid request.
+2. `php jobs/GenerateStationMetadata.php` will obtain the Tempest station metadata, which is required for all other Tempest API calls.
 
 Assuming both commands complete without issue, you can "install" the web request handler for your slash command. It is very important to understand that the `requesthandler/index.php` file is _not_ intended to be present at the same location as the rest of the bot source. `requesthandler/index.php` should be copied to the path you specified as the `Request URL` of your slash command and edit line 6 (`$botCodePath`) accordingly. This ensures separation between components of the bot (e.g. keeping bot source and keys not publicly-available).
 
@@ -48,14 +48,33 @@ A handful of additional items must be configured to enable the home tab and its 
 As with the standard slash command request handler, it is very important to understand that the `eventlistener/index.php` and `interactivelistener/index.php` files are _not_ intended to be present at the same location as the rest of the bot source.
 
 ### Ongoing Configuration Update Cadence
-In theory, the station metadata would rarely, if ever, change. Additionally, depending on your Slack Workspace, your user base may rarely change. It is of good form to periodically re-run the `SlackUsers.php` and `GenerateStationMetadata.php` scripts as a refresh. For higher-request environments, the history data files could also take up more local disk space than desired. A `CleanupHistory.php` script is included to easily purge the history cache.
+In theory, the station metadata would rarely, if ever, change. Additionally, depending on your Slack Workspace, your user base may rarely change. It is of good form to periodically re-run the maintenance scripts in the `jobs/` directory such as `SlackUsers.php` and `GenerateStationMetadata.php`. For higher-request environments, the history data files could also take up more local disk space than desired. A `CleanupHistory.php` script is included to easily purge the history cache.
 
 While these scripts can be manually invoked on some interval, they can also be easily invoked with cron (example: quarterly at 03:30 for users and metadata, and semi-annually at 06:00 for history files):
 ```bash
-30 3 1 */3 * /path/to/php /path/to/SlackUsers.php
-30 3 1 */3 * /path/to/php /path/to/GenerateStationMetadata.php
-0 6 1 */6 * /path/to/php /path/to/CleanupHistory.php
+30 3 1 */3 * /path/to/php /path/to/jobs/SlackUsers.php
+30 3 1 */3 * /path/to/php /path/to/jobs/GenerateStationMetadata.php
+0 6 1 */6 * /path/to/php /path/to/jobs/CleanupHistory.php
 ```
+
+### NWS API Performance Improvement
+If either/both `$useNWSAPIAlerts` or `$useNWSAPIForecasts` variables are set to `true` (see `config/nws.php` lines 6-7), features of the [NWS API](https://www.weather.gov/documentation/services-web-api) are enabled for the bot.
+
+The NWS API provides a lot of additional value and usefulness to the bot; however, using the NWS API requires additional external API requests. In most circumstances the bot will behave without issue, though there's an additional latency involved which can (and does) periodically cause the bot to not respond in a timely/expected manner. These timeouts manifest in different non-fatal ways (delayed updates or timeout messages).
+
+To improve bot performance, two scripts are included in the `jobs/` directory:
+* `RefreshNWSAlertData.php` - Cache NWS Alert Data
+* `RefreshNWSForecastData.php` - Cache NWS Forecast Data (Hourly and Regular 7-Day)
+
+The scripts are designed to be invoked with cron, for example (alerts every 10 minutes and forecasts at 20 past each hour):
+```bash
+*/10 * * * * /path/to/php /path/to/jobs/RefreshNWSAlertData.php
+20 * * * * /path/to/php /path/to/jobs/RefreshNWSForecastData.php
+```
+
+`RefreshNWSAlertData.php` will _always_ update the alert data file, overriding the default value set for maximum age of the alert data file (10 minutes). In testing and practice, 10 minutes has seemed an appropriate update cadence; your mileage may vary. Set this interval to your desired window.
+
+`RefreshNWSForecastData.php` will update the hourly and regular 7-day forecast data files, respecting the values (`$nwsAPIHourlyForcastCadence` and `$nwsAPIForecastCadence` set on lines 8-9 in `config/nws.php`). The default values should be sufficient, including the cron example, as the NWS typically updates hourly forecasts around 10 or 15 minutes past each hour, and updates the regular forecast around every 6 hours (typically around 04:00, 10:00, 16:00, and 22:00). Set the cron and cadence intervals to your desired windows; however, know that the data does not typically change with greater frequency than hourly, and the NWS API service may consider more frequent requests as an abuse of the service.
 
 ## Bot Usage
 On installation and configuration, interact with the bot accordingly in Slack: `/weather tomorrow`

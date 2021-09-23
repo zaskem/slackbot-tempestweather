@@ -71,7 +71,21 @@
         array_push($blks, $observationBlock);
       }
     }
-    array_push($blks, $refreshDataButton, $dividerBlock, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Next four hours:*')));
+    array_push($blks, $refreshDataButton, $dividerBlock, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Today\'s Data:*')));
+
+    // Daily Summary
+    $dailySummaryData = getStationObservationsByDay(date('Y-m-d', strtotime('today')), false);
+    if (!isset($dailySummaryData['obs'][0])) {
+      // We are missing valid observation data
+      array_push($blks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'There was a problem with today\'s observation data.')));
+    } else {
+      $almanacObservation = new TempestObservation('history', $dailySummaryData['obs']);
+      $observationBlocks = $almanacObservation->getHomeTodayBlocks();
+      foreach ($observationBlocks as $observationBlock) {
+        array_push($blks, $observationBlock);
+      }
+    }
+    array_push($blks, $dividerBlock, array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'WeatherBot Forecast')), array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Today:*')));
 
     // Grab the forecast data
     getStationForecast();
@@ -79,6 +93,13 @@
     $dailyData = $stationForecast['forecast']['daily'];
     $hourlyData = $stationForecast['forecast']['hourly'];
 
+    // Today's Forecast
+    $forecastObservation = new TempestObservation('day_forecast', $dailyData[0]);
+    $observationBlocks = $forecastObservation->getHome0DayBlocks();
+    foreach ($observationBlocks as $observationBlock) {
+      array_push($blks, $observationBlock);
+    }
+    array_push($blks, $dividerBlock, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Next four hours:*')));
 
     // Next Four Hours
     $hourCount = 4;
@@ -92,7 +113,6 @@
       $hour++;
     }
     array_push($blks, $dividerBlock, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Next five days:*')));
-
 
     // Next Five Days:
     $dayCount = 5;

@@ -297,7 +297,13 @@ class TempestObservation {
 
     // PRECIPITATION
     // Reference values
-    $this->dailyPrecip = $data[$this->lastObsID][20];
+    // Same-Day History Situation:
+    // Use un-analyzed value (#18) if no analysis is complete (same-day history) (#21 == 0); otherwise use RainCheck value (#20)
+    if (0 == $data[$this->lastObsID][21]) {
+      $this->dailyPrecip = $data[$this->lastObsID][18];
+    } else {
+      $this->dailyPrecip = $data[$this->lastObsID][20];
+    }
     // Formatted values
     $this->f_dailyPrecip = $this->convertMmToInch($this->dailyPrecip) . $this->precipUnitLabel;
   }
@@ -313,6 +319,38 @@ class TempestObservation {
 
     $blocks = array(array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'*Currently (' . $this->f_timestamp . '):*')), array('type'=>'section','fields'=>array(['type'=>'mrkdwn','text'=>':thermometer: ' . $temperatureText . '
         dew point ' . $this->f_dew_point . ' (humidity ' . $this->f_relative_humidity . ')'], ['type'=>'mrkdwn','text'=>':dash: ' . $this->f_windDir . ' ' . $this->f_windAvg . ' (gusting ' . $this->f_windGust . ')'])));
+
+    return $blocks;
+  }
+
+
+  /**
+   * getHomeTodayBlocks() - return Slack today's data/summary blocks for the App Home Tab
+   * 
+   * @return array of Slack blocks
+   */
+  public function getHomeTodayBlocks() {
+    $blocks = array(array('type'=>'section','fields'=>array(['type'=>'mrkdwn','text'=>':arrow_up::thermometer:' . $this->f_highTemp . $this->f_highTempTimestamp], ['type'=>'mrkdwn','text'=>'_Pressure Trend:_ ' . $this->f_pressTrend])),
+    array('type'=>'section','fields'=>array(['type'=>'mrkdwn','text'=>':arrow_down::thermometer:' . $this->f_lowTemp . $this->f_lowTempTimestamp], ['type'=>'mrkdwn','text'=>':dash: ' . $this->f_highWindDir . ' ' . $this->f_highWindGust . $this->f_highWindTimestamp])));
+    if ($this->dailyPrecip > 0) {
+      array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>':rain_cloud: ' . $this->f_dailyPrecip)));
+    }
+    if ($this->strikeCount > 0) {
+      array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>':lightning: ' . $this->f_strikeCount . ' (closest ' . $this->f_closestStrike . $this->f_closeStrikeTimestamp . ')')));
+    }
+
+    return $blocks;
+  }
+
+
+  /**
+   * getHome0DayBlocks() - return Slack 0-day (today) forecast blocks for the App Home Tab
+   * 
+   * @return array of Slack blocks
+   */
+  public function getHome0DayBlocks() {
+    $blocks = array(array('type'=>'section','fields'=>array(['type'=>'mrkdwn','text'=>':arrow_up::thermometer: ' . $this->f_high_temperature], ['type'=>'mrkdwn','text'=>$this->slackConditionIcons[$this->icon] . ' ' . $this->conditions])),
+    array('type'=>'section','fields'=>array(['type'=>'mrkdwn','text'=>':arrow_down::thermometer: ' . $this->f_low_temperature], ($this->precip_probability > 0) ? ['type'=>'mrkdwn','text'=>$this->f_precip_probability . ' chance ' . $this->f_precip_type] : ['type'=>'mrkdwn','text'=>' '])));
 
     return $blocks;
   }

@@ -336,7 +336,7 @@ class TempestObservation {
       array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>':rain_cloud: ' . $this->f_dailyPrecip)));
     }
     if ($this->strikeCount > 0) {
-      array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>':lightning: ' . $this->f_strikeCount . ' (closest ' . $this->f_closestStrike . $this->f_closeStrikeTimestamp . ')')));
+      array_push($blocks, array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>':lightning: ' . $this->f_strikeCount . ' strikes (closest: ' . $this->f_closestStrike . $this->f_closeStrikeTimestamp . ')')));
     }
 
     return $blocks;

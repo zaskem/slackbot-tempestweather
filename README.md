@@ -30,7 +30,7 @@ Edit each file as necessary for your bot. Note that as the bot goes into product
 
 Before the bot can properly respond to requests, two scripts must be manually invoked on the bot host to generate access lists and metadata:
 1. `php jobs/SlackUsers.php` will generate the "access list" of accounts in your Workspace, which is required to loosely "authenticate" a valid request.
-2. `php jobs/GenerateStationMetadata.php` will obtain the Tempest station metadata, which is required for all other Tempest API calls.
+2. `php jobs/GenerateTempestMetadata.php` will obtain the Tempest station metadata, which is required for all other Tempest API calls.
 
 Assuming both commands complete without issue, you can "install" the web request handler for your slash command. It is very important to understand that the `requesthandler/index.php` file is _not_ intended to be present at the same location as the rest of the bot source. `requesthandler/index.php` should be copied to the path you specified as the `Request URL` of your slash command and edit line 6 (`$botCodePath`) accordingly. This ensures separation between components of the bot (e.g. keeping bot source and keys not publicly-available).
 

@@ -1,6 +1,7 @@
 <?php
-  require_once __DIR__ . '/config/bot.php';
-  require_once __DIR__ . '/config/slack.php';
+  $botCodePath = __DIR__ . '/../';
+  require_once $botCodePath . '/config/bot.php';
+  require_once $botCodePath . '/config/slack.php';
 
   /**
    * GetSlackUsers() - function to obtain a list of Slack workspace users.
@@ -37,7 +38,7 @@
   // Grab the current user list and write it to file.
   $data = GetSlackUsers();
   if ($data) {
-    file_put_contents(__DIR__ . '/config/slackUsers.generated.php', '<?php return ' . var_export($data, true) . '; ?>');
+    file_put_contents($botCodePath . '/config/slackUsers.generated.php', '<?php return ' . var_export($data, true) . '; ?>');
   } else {
     print "Failed Request.\n";
   }

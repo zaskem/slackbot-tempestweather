@@ -4,8 +4,9 @@
    * 
    * Intended to be called via cron on some routine (monthly, quarterly) interval, but not required for bot operation.
    */
+  $botCodePath = __DIR__ . '/../';
   // Grab the $tempestStationHistoryPath from bot configuration
-  include __DIR__ . '/config/tempest.php';
+  include $botCodePath . '/config/tempest.php';
   // Unlink/Delete each .json file at the $tempestStationHistoryPath
   array_map('unlink', glob("$tempestStationHistoryPath*.json"));
 ?>

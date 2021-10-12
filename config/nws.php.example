@@ -12,7 +12,7 @@
   // Your Zone ID (not used by default, but set as desired in lieu of station lat/long)
   $nwsZoneID = ""; // A given location will likely have two options (zone and county), e.g. MNZ000 / MNC000
   // Alert Urgency API Query Values You Want
-  $alertUrgency = urlencode('immediate,expected,future,unknown'); // immediate, expected, future, past, unknown, null
+  $alertUrgency = urlencode('Immediate,Expected,Future,Unknown'); // Immediate, Expected, Future, Past, Unknown, null
 
 // API Severity levels (should match NWS API supported values)
   $severityLevels = array(0=>'', 1=>'unknown',2=>'minor',3=>'moderate',4=>'severe',5=>'extreme');

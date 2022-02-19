@@ -3,7 +3,7 @@
    * THE FOLLOWING LINE IS THE _ONLY_ REQUIRED EDIT FOR THIS REQUEST URL HANDLER.
    * CHANGE THIS TO THE NON-WEB ACCESSIBLE PATH HOUSING THE REST OF THE BOT CODE.
    */
-  $botCodePath = __DIR__ . '/../';
+  $botCodePath = __DIR__ . '/../../';
 
   require $botCodePath . '/config/bot.php';
   include $botCodePath . '/config/tempest.php';

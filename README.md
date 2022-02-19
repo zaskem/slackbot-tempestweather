@@ -16,7 +16,7 @@ In setting up a Tempest weather station most of the work is automatically handle
 Creating a [Slack App](https://api.slack.com/apps/) and associated Bot is outside the scope of this README. You will need to create a new App, configure a slash command of your choice (e.g. `/weather`), and add OAuth scopes for `chat:write` and `users:read`. Install the App to a testing channel, and copy much of the information in the `App Credentials` section of your App's `Basic Information` page.
 
 #### A note about creating a listening event:
-This bot can be modified to respond to an Event in addition to or instead of using a slash command. An event subscription for `app_home_opened` is required for the optional app home functionality, for example. In configuring an event subscription, you will need to respond to a one-time challenge request. An example responder (`challengeresponder.php`) is included in the `eventlistener/` directory for reference.
+This bot can be modified to respond to an Event in addition to or instead of using a slash command. An event subscription for `app_home_opened` is required for the optional app home functionality, for example. In configuring an event subscription, you will need to respond to a one-time challenge request. An example responder (`challengeresponder.php`) is included in the `web/eventlistener/` directory for reference.
 
 ## Bot Configuration and First Run Instrcutions
 Three configuration files exist in the `config/` directory. Example/Stubout versions are provided, and each of these files should be copied without the `.example` extension (e.g. `cp bot.php.example bot.php`):
@@ -32,7 +32,12 @@ Before the bot can properly respond to requests, two scripts must be manually in
 1. `php jobs/SlackUsers.php` will generate the "access list" of accounts in your Workspace, which is required to loosely "authenticate" a valid request.
 2. `php jobs/GenerateTempestMetadata.php` will obtain the Tempest station metadata, which is required for all other Tempest API calls.
 
-Assuming both commands complete without issue, you can "install" the web request handler for your slash command. It is very important to understand that the `requesthandler/index.php` file is _not_ intended to be present at the same location as the rest of the bot source. `requesthandler/index.php` should be copied to the path you specified as the `Request URL` of your slash command and edit line 6 (`$botCodePath`) accordingly. This ensures separation between components of the bot (e.g. keeping bot source and keys not publicly-available).
+Assuming both commands complete without issue, you can "install" the request handler for your slash command and/or other features.
+
+## Web-Accessible Handler Installation Instructions
+The repo provides a default `web/` directory, intended to be configured as the document root of the bot host (e.g. the `DocumentRoot /path/to/repo/web` Apache configuration directive). Assuming your web host configuration is set to use the `web/` directory as the Internet-facing root of your bot (e.g. `https://weatherbot.example.com`), no further server-side configuration is necessary to invoke the bot. The slash command can then be set up with a `Request URL` such as `https://weatherbot.example.com/requesthandler/`.
+
+This default configuration also applies to optional "App Home" functionality handlers if enabled.
 
 ### Optional "App Home" Functionality
 If desired, the "App Home Tab" can be easily enabled for this bot. Enabling the bot app home tab provides a condensed single-page view of current conditions and alerts, a four-hour forecast, and the five-day forecast without invoking any commands, and is refreshed each time the tab is opened.
@@ -47,8 +52,15 @@ A handful of additional items must be configured to enable the home tab and its 
 
 As with the standard slash command request handler, it is very important to understand that the `eventlistener/index.php` and `interactivelistener/index.php` files are _not_ intended to be present at the same location as the rest of the bot source.
 
+#### Initial Release (v1.0.0) Compatibility or Handler Customization Notes
+The initial release (v1.0.0) had a mixed repository root directory structure, where Internet-facing directories were mixed with non-Internet-facing directories and files. This necessitated copying these directories and files to a different location/document root, as the `requesthandler/index.php`, `eventlistener/index.php`, and `interactivelistener/index.php` files are the _only_ files intended to be Internet- or web-accessible. The bot source files should _not_ be Internet-facing to ensure separation between components of the bot (e.g. keeping bot source and keys not publicly-available).
+
+This configuration required additional effort when updating to ensure "new" versions were properly moved to the document root. If you were using v1.0.0, changing your web server configuration to use the `web/` path as the document root is recommended for simplicity. However, with manual intervention it is still possible to use an alternative document root for the handlers if desired or necessary (e.g. you do not have direct control over the bot's document root). Moving from the v1.0.0 release (or its vintage) without understanding this structure change may cause your bot to break in unpredictable ways.
+
+## Bot Maintenace and Performance Options
+
 ### Ongoing Configuration Update Cadence
-In theory, the station metadata would rarely, if ever, change. Additionally, depending on your Slack Workspace, your user base may rarely change. It is of good form to periodically re-run the maintenance scripts in the `jobs/` directory such as `SlackUsers.php` and `GenerateStationMetadata.php`. For higher-request environments, the history data files could also take up more local disk space than desired. A `CleanupHistory.php` script is included to easily purge the history cache.
+In theory, the station metadata rarely, if ever, changes. Additionally, depending on your Slack Workspace, your user base may rarely change. It is of good form to periodically re-run the maintenance scripts in the `jobs/` directory such as `SlackUsers.php` and `GenerateStationMetadata.php`. For higher-request environments, the history data files could also take up more local disk space than desired. A `CleanupHistory.php` script is included to easily purge the history cache.
 
 While these scripts can be manually invoked on some interval, they can also be easily invoked with cron (example: quarterly at 03:30 for users and metadata, and semi-annually at 06:00 for history files):
 ```bash

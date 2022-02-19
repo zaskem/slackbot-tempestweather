@@ -1,5 +1,6 @@
 <?php
   require_once __DIR__ . '/config/bot.php';
+  require_once __DIR__ . '/config/version.php';
   require_once __DIR__ . '/config/slack.php';
   require_once __DIR__ . '/config/nws.php';
   require __DIR__ . '/TempestAPIFunctions.php';
@@ -8,7 +9,7 @@
 
   // Static/Reused block content
   $refreshDataButton = array('type'=>'actions','elements'=>[array('type'=>'button','action_id'=>'refresh_data','text'=>array('type'=>'plain_text','text'=>':arrows_clockwise: Refresh Data','emoji'=>true),'value'=>'appHomeRefresh')]);
-  $botVersionBlock = array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>$bot_name . ' version: ' . $bot_version)]);
+  $botVersionBlock = array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>$bot_name . ' core: ' . $bot_core_version . ' | config: ' . $bot_version)]);
   $helpContextBlock = array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>'Get more bot help with `' . $bot_slashcommand . ' help` or at https://tempestweatherbot.mzonline.com/help.html')]);
   $dividerBlock = array('type'=>'divider');
 

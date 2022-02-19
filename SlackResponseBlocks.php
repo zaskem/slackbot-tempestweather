@@ -1,10 +1,11 @@
 <?php
-  require_once __DIR__. '/config/bot.php';
+  require_once __DIR__ . '/config/bot.php';
+  require_once __DIR__ . '/config/version.php';
 
   // The guide/mechanism at https://app.slack.com/block-kit-builder/ is awesome for testing block structure
-  $helpContextBlock = array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>'Get help with `' . $bot_slashcommand . ' help` | '. $bot_name . ' version: ' . $bot_version)]);
+  $helpContextBlock = array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>'Get help with `' . $bot_slashcommand . ' help` | '. $bot_name . ' core: ' . $bot_core_version . ' | config: ' . $bot_version)]);
   $keywordPrivateBlock = array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>'The `private` keyword can be appended to the _end_ of any command to privately respond to the calling user. This keyword _*must*_ be the last argument in all commands.')]);
-  $botVersionBlock = array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>$bot_name . ' version: ' . $bot_version)]);
+  $botVersionBlock = array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>$bot_name . ' core: ' . $bot_core_version . ' | config: ' . $bot_version)]);
   $botSourceHeaderBlock = array('type'=>'header','text'=>array('type'=>'plain_text','text'=>'Bot Project and Source Code','emoji'=>true));
   $botSourceDetailBlock = array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'The ' . $bot_name . ' project page and source code on GitHub can be found at https://tempestweatherbot.mzonline.com/.'));
   $dividerBlock = array('type'=>'divider');

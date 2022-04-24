@@ -546,6 +546,26 @@ class TempestObservation {
   }
 
 
+  /**
+   * getCurrentLightningEpoch() - return `lightning_strike_last_epoch` value from a current observation
+   * 
+   * @return integer of epoch timestamp
+   */
+  public function getCurrentLightningEpoch() {
+    return $this->lightning_strike_last_epoch;
+  }
+
+
+  /**
+   * getCurrentLightningLastDistance() - return `lightning_strike_last_distance` value from a current observation
+   * 
+   * @return integer of distance value
+   */
+  public function getCurrentLightningLastDistance() {
+    return $this->lightning_strike_last_distance;
+  }
+
+
   // Utility Functions
   /**
    * min_mod() function modification to ignore "null" values, sourced from https://www.php.net/manual/en/function.min.php

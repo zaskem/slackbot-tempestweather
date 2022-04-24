@@ -1,0 +1,42 @@
+<?php
+  /**
+   * Settings for push notifications
+   */
+  $pushLightningNotices = false;
+  $pushAlertNotices = false;
+  $useWebsocket = false;
+  $debug_push = false;
+  // You can obtain the Alert Channel ID from the 'About' tab of the channel in question
+  $slackNoticeChannelID = 'YourSlackAlertChannelID';
+  $slackNoticeChannelBotName = 'Tempest WeatherBot Alerts';
+  $clientCronInterval = 3600; // Set this to the cron interval for auto-starting the polling job (suggested: 1 hour/3600 seconds)
+  $notifyWindowSeconds = 600; // Minimum amount of time between similar push notifications (for lightning only)
+  $lightningPushEmoji = ':zap:';
+  $alertPushEmoji = ':bangbang:';
+
+  /**
+   * Most settings below this point can be ignored EXCEPT `$websocketAutoloadPath`
+   * 
+   * You MUST set the `$websocketAutoloadPath` value appropriately if using websocket notice monitoring!
+   */
+
+  if ($useWebsocket) {
+    // VARIABLES SPECIFIC TO WEBSOCKET LISTENER
+    // The websocket-php library from https://github.com/Textalk/websocket-php must be installed and configured for the autoload below.
+    $websocketAutoloadPath = '/path/to/vendor/autoload.php';
+    $listenInterval = 15; // Seconds between listening for updates (sleep interval) - default/suggested value of 15 seconds
+
+    $stationMetadata = include_once __DIR__ . '/stationMetadata.generated.php';
+    $websocketID = $stationMetadata['devices'][1]['serial_number'];
+    $deviceID = $stationMetadata['devices'][1]['device_id'];
+    $startListenJSON = '{"type":"listen_start","device_id":'.$deviceID.',"id":"'.$websocketID.'"}';
+    $stopListenJSON = '{"type":"listen_stop","device_id":'.$deviceID.',"id":"'.$websocketID.'"}';
+  } else {
+    // VARIABLES FOR REGULAR OBSERVATION API CALL
+    $listenInterval = 60; // Seconds between polling the Tempest API for current observations (sleep interval) - default/suggested value of 60 seconds as data is only updated once per minute
+  }
+
+  // Push Status Data Files
+  $lightningStatusData = __DIR__ . '/lightningStatusData.generated.php';
+  $alertStatusData = __DIR__ . '/alertStatusData.generated.php';
+?>

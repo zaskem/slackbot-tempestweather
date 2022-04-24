@@ -299,4 +299,21 @@
 
     return $blocks;
   }
+
+
+  /**
+   * getSlackLightningPushBlocks($lightningDetails) - generate lightning alert block content
+   * 
+   * $lightningDetails - two-argument array for lightning data:
+   *  array(int `lightningepochtimestamp`, int `lightningdistancedetected`)
+   * 
+   * @return array of block content payload
+   */
+  function getSlackLightningPushBlocks($lightningDetails) {
+    $blocks = [array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>':warning: *LIGHTNING DETECTED* :warning:'))];
+    array_push($blocks, array('type'=>'divider'), array('type'=>'section','text'=>array('type'=>'mrkdwn','text'=>'Approximately '. number_format(($lightningDetails[1] / 1.609344497892563), 2) . ' miles away.')));
+    array_push($blocks, array('type'=>'context','elements'=>[array('type'=>'mrkdwn','text'=>'Detection time: ' . date('F j h:i:s a',$lightningDetails[0]))]));
+  
+    return $blocks;
+  }
 ?>

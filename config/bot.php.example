@@ -12,7 +12,7 @@
   $bot_historyStarts = '2010-01-01';
 
   // Version vanity string and debug flag
-  $bot_version = '2021-09-22';
+  $bot_version = '2022-04-24';
   $debug_bot = false;
 
   // Sets the default API response to be the name of the Bot app, not the Bot user.
@@ -25,7 +25,7 @@
   $precipUnitLabel = '"';
   $distanceUnitLabel = 'mi';
   $solarRadLabel = 'W/m²';
-  
+
   /**
    * Associative array of conditions to their matching Slack emoji codes
    * 

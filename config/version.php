@@ -1,4 +1,4 @@
 <?php
   // Bot Core Version string
-  $bot_core_version = '2022-02-19 v1.1.0';
+  $bot_core_version = '2022-04-24 v1.2.0';
 ?>

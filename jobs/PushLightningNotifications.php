@@ -53,13 +53,18 @@
             // Capture `evt_strike` responses only
             if ('evt_strike' == $details['type']) {
               $pushNotification = false;
-              if ($details['evt'][1] < $lastLightningDistance) {
-                // Lightning is closer than last time, notify...
+              if ($details['evt'][1] <= $lightningDistanceOverride) {
+                // Lightning is closer than the distance threshold (VERY CLOSE), ALWAYS notify...
+                $pushNotification = true;
+                $lastLightningDistance = $details['evt'][1];
+                $lastLightningNotification = time();
+              } else if ($details['evt'][1] <= $lastLightningDistance - $lightningDistanceOverride) {
+                // Lightning is closer than last time (accounting for distance threshold), notify...
                 $pushNotification = true;
                 $lastLightningDistance = $details['evt'][1];
                 $lastLightningNotification = time();
               } else if ($details['evt'][0] > ($lastLightningNotification + $notifyWindowSeconds)) {
-                // Not closer, but $notifyWindowSeconds has elapsed since the last notice, so notify anyway...
+                // $notifyWindowSeconds has elapsed since the last notice, so notify anyway...
                 $pushNotification = true;
                 $lastLightningDistance = $details['evt'][1];
                 $lastLightningNotification = time();

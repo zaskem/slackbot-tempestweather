@@ -11,6 +11,7 @@
   $slackNoticeChannelBotName = 'Tempest WeatherBot Alerts';
   $clientCronInterval = 3600; // Set this to the cron interval for auto-starting the polling job (suggested: 1 hour/3600 seconds)
   $notifyWindowSeconds = 600; // Minimum amount of time between similar push notifications (for lightning only)
+  $lightningDistanceOverride = 8; // If lightning is closer than this distance (km), override time and push notice
   $lightningPushEmoji = ':zap:';
   $alertPushEmoji = ':bangbang:';
 

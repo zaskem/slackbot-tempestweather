@@ -58,7 +58,7 @@
                 $pushNotification = true;
                 $lastLightningDistance = $details['evt'][1];
                 $lastLightningNotification = time();
-              } else if ($details['evt'][1] <= $lastLightningDistance - $lightningDistanceOverride) {
+              } else if ($details['evt'][1] <= ($lastLightningDistance - $lightningDistanceOverride)) {
                 // Lightning is closer than last time (accounting for distance threshold), notify...
                 $pushNotification = true;
                 $lastLightningDistance = $details['evt'][1];
@@ -117,13 +117,18 @@
         if (isset($lastObservation['obs'][0])) {
           $observation = new TempestObservation('current', $lastObservation['obs'][0]);
           $pushNotification = false;
-          if (($observation->getCurrentLightningEpoch() > $lastLightningNotification) && ($observation->getCurrentLightningLastDistance() < $lastLightningDistance)) {
-            // Lightning is closer than last time, always notify...
+          if ($observation->getCurrentLightningLastDistance() <= $lightningDistanceOverride) {
+            // Lightning is closer than the distance threshold (VERY CLOSE), ALWAYS notify...
+            $pushNotification = true;
+            $lastLightningDistance = $observation->getCurrentLightningLastDistance();
+            $lastLightningNotification = time();
+          } else if ($observation->getCurrentLightningLastDistance() < ($lastLightningDistance - $lightningDistanceOverride)) {
+            // Lightning is closer than last time (accounting for distance threshold), notify...
             $pushNotification = true;
             $lastLightningDistance = $observation->getCurrentLightningLastDistance();
             $lastLightningNotification = time();
           } else if ($observation->getCurrentLightningEpoch() > ($lastLightningNotification + $notifyWindowSeconds)) {
-            // Not closer, but $notifyWindowSeconds has elapsed since the last notice, so notify anyway...
+            // $notifyWindowSeconds has elapsed since the last notice, so notify anyway...
             $pushNotification = true;
             $lastLightningDistance = $observation->getCurrentLightningLastDistance();
             $lastLightningNotification = time();

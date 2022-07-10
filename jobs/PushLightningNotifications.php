@@ -53,8 +53,8 @@
             // Capture `evt_strike` responses only
             if ('evt_strike' == $details['type']) {
               $pushNotification = false;
-              if ($details['evt'][1] <= $lightningDistanceOverride) {
-                // Lightning is closer than the distance threshold (VERY CLOSE), ALWAYS notify...
+              if (($details['evt'][1] <= $lightningDistanceOverride) && ($details['evt'][1] < $lastLightningDistance)) {
+                // Lightning is closer than the distance threshold and closer than last strike notice (VERY CLOSE), ALWAYS notify...
                 $pushNotification = true;
                 $lastLightningDistance = $details['evt'][1];
                 $lastLightningNotification = time();
@@ -117,8 +117,8 @@
         if (isset($lastObservation['obs'][0])) {
           $observation = new TempestObservation('current', $lastObservation['obs'][0]);
           $pushNotification = false;
-          if ($observation->getCurrentLightningLastDistance() <= $lightningDistanceOverride) {
-            // Lightning is closer than the distance threshold (VERY CLOSE), ALWAYS notify...
+          if (($observation->getCurrentLightningLastDistance() <= $lightningDistanceOverride) && ($observation->getCurrentLightningLastDistance() < $lastLightningDistance)) {
+            // Lightning is closer than the distance threshold and closer than last strike notice (VERY CLOSE), ALWAYS notify...
             $pushNotification = true;
             $lastLightningDistance = $observation->getCurrentLightningLastDistance();
             $lastLightningNotification = time();

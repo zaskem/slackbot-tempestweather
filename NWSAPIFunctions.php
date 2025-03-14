@@ -101,7 +101,9 @@
 
     // Write out data
     if ($toFile) {
-      file_put_contents(__DIR__ . '/config/nwsAlerts.generated.php', '<?php return ' . var_export($alertData, true) . '; ?>');
+      if (isset($alertData['features'])) {
+        file_put_contents(__DIR__ . '/config/nwsAlerts.generated.php', '<?php return ' . var_export($alertData, true) . '; ?>');
+      }
     } else {
       return $alertData;
     }
